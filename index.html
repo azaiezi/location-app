@@ -13,181 +13,160 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg: #f4f4f0;
-      --bg2: #ffffff;
-      --bg3: #ebebeb;
-      --text: #1a1a2e;
-      --text2: #6b6b7a;
-      --text3: #a0a0b0;
-      --border: rgba(0,0,0,0.09);
-      --border2: rgba(0,0,0,0.15);
-      --primary: #1a1a2e;
-      --accent: #e8a045;
-      --radius: 14px;
-      --radius-lg: 18px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-
-    /* ── App Shell ── */
-    #app { display: flex; flex-direction: column; height: 100vh; max-width: 480px; margin: 0 auto; background: var(--bg); position: relative; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.12); }
-
-    /* ── Status bar ── */
-    .status-bar { background: var(--primary); height: env(safe-area-inset-top, 0px); min-height: 0; }
-
-    /* ── Screens ── */
-    .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 70px; }
-    .screen.active { display: flex; }
-    .screen::-webkit-scrollbar { display: none; }
-
-    /* ── Header ── */
-    .header { background: var(--primary); padding: 18px 20px 16px; color: #fff; flex-shrink: 0; }
-    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
-    .header h1 { font-size: 20px; font-weight: 600; color: #fff; }
-    .header p { font-size: 13px; color: rgba(255,255,255,0.55); }
-    .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #fff; flex-shrink: 0; }
-
-    /* ── Search ── */
-    .search-wrap { padding: 14px 16px 0; }
-    .search-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 12px; display: flex; align-items: center; padding: 10px 12px; gap: 8px; }
-    .search-box input { border: none; background: transparent; font-size: 14px; color: var(--text); flex: 1; outline: none; font-family: 'DM Sans', sans-serif; }
-    .search-box input::placeholder { color: var(--text3); }
-    .search-btn { background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-
-    /* ── Filter chips ── */
-    .filters { display: flex; gap: 8px; padding: 12px 16px 0; overflow-x: auto; flex-shrink: 0; }
-    .filters::-webkit-scrollbar { display: none; }
-    .chip { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 20px; padding: 6px 15px; font-size: 12px; color: var(--text2); cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; flex-shrink: 0; }
-    .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-    /* ── Section label ── */
-    .section-lbl { padding: 16px 16px 8px; font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
-
-    /* ── Apartment card ── */
-    .apt-card { background: var(--bg2); border-radius: var(--radius-lg); margin: 0 16px 14px; border: 0.5px solid var(--border); overflow: hidden; cursor: pointer; transition: transform 0.12s; }
-    .apt-card:active { transform: scale(0.98); }
-    .apt-img { height: 175px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 54px; }
-    .apt-badge { position: absolute; top: 10px; left: 10px; background: rgba(26,26,46,0.82); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 500; backdrop-filter: blur(4px); }
-    .apt-fav { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; background: rgba(255,255,255,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; border: none; }
-    .apt-body { padding: 13px 15px 15px; }
-    .apt-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-    .apt-loc { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
-    .apt-row { display: flex; align-items: center; justify-content: space-between; }
-    .apt-price { font-size: 18px; font-weight: 600; color: var(--primary); }
-    .apt-price span { font-size: 12px; color: var(--text2); font-weight: 400; }
-    .apt-tags { display: flex; gap: 6px; }
-    .tag { background: var(--bg3); border-radius: 6px; padding: 4px 9px; font-size: 11px; color: var(--text2); }
-
-    /* ── Bottom Nav ── */
-    .bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 62px; background: var(--bg2); border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-around; padding: 0 4px calc(env(safe-area-inset-bottom, 0px)); z-index: 100; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 8px 10px; border-radius: 10px; transition: background 0.15s; flex: 1; border: none; background: transparent; font-family: 'DM Sans', sans-serif; }
-    .nav-item svg { width: 22px; height: 22px; stroke: var(--text3); fill: none; stroke-width: 1.8; transition: stroke 0.15s; }
-    .nav-item .nav-lbl { font-size: 10px; color: var(--text3); transition: color 0.15s; }
-    .nav-item.active svg { stroke: var(--primary); }
-    .nav-item.active .nav-lbl { color: var(--primary); font-weight: 600; }
-
-    /* ── Detail screen ── */
-    .detail-img { min-height: 230px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 80px; flex-shrink: 0; }
-    .back-btn { position: absolute; top: 14px; left: 14px; width: 36px; height: 36px; background: rgba(255,255,255,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; border: none; backdrop-filter: blur(4px); }
-    .detail-body { padding: 18px 18px 100px; }
-    .detail-title { font-size: 21px; font-weight: 600; margin-bottom: 5px; }
-    .detail-loc { font-size: 13px; color: var(--text2); margin-bottom: 14px; }
-    .detail-price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 18px; }
-    .detail-price { font-size: 26px; font-weight: 600; color: var(--primary); }
-    .detail-price-unit { font-size: 14px; color: var(--text2); }
-    .amenities { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-    .amenity { background: var(--bg3); border-radius: 10px; padding: 8px 12px; font-size: 12px; color: var(--text2); }
-    .detail-desc { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; }
-    .date-label { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-    .date-row { display: flex; gap: 10px; margin-bottom: 18px; }
-    .date-input { flex: 1; border: 0.5px solid var(--border2); border-radius: 10px; padding: 11px 12px; font-size: 13px; color: var(--text); background: var(--bg2); font-family: 'DM Sans', sans-serif; outline: none; }
-    .apt-info-row { background: var(--bg3); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--text2); }
-    .reserve-btn { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 448px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius); padding: 17px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-
-    /* ── Deposit form ── */
-    .form-wrap { padding: 18px 16px 80px; }
-    .form-group { margin-bottom: 15px; }
-    .form-label { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; display: block; }
-    .form-input { width: 100%; border: 0.5px solid var(--border2); border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--text); background: var(--bg2); font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s; }
-    .form-input:focus { border-color: var(--primary); }
-    .form-row { display: flex; gap: 10px; }
-    .form-row .form-group { flex: 1; }
-    textarea.form-input { resize: none; line-height: 1.6; }
-    .img-picker { border: 1.5px dashed var(--border2); border-radius: 12px; padding: 26px; text-align: center; cursor: pointer; background: var(--bg2); }
-    .img-picker-icon { font-size: 30px; margin-bottom: 8px; }
-    .img-picker p { font-size: 13px; color: var(--text2); }
-    .submit-btn { width: 100%; background: var(--primary); color: #fff; border: none; border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 8px; }
-
-    /* ── Reservation cards ── */
-    .resa-card { background: var(--bg2); border-radius: var(--radius); margin: 0 16px 12px; border: 0.5px solid var(--border); padding: 14px; }
-    .resa-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .resa-thumb { width: 56px; height: 56px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
-    .resa-info { flex: 1; min-width: 0; }
-    .resa-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .resa-dates { font-size: 12px; color: var(--text2); margin-top: 2px; }
-    .resa-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
-    .s-pending { background: #FAEEDA; color: #854F0B; }
-    .s-confirmed { background: #EAF3DE; color: #3B6D11; }
-    .s-cancelled { background: #FCEBEB; color: #A32D2D; }
-    .resa-total { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
-    .resa-total strong { color: var(--text); }
-    .resa-footer { display: flex; gap: 8px; padding-top: 10px; border-top: 0.5px solid var(--border); }
-    .resa-btn { flex: 1; border: 0.5px solid var(--border2); border-radius: 8px; padding: 9px; text-align: center; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; background: transparent; color: var(--text); transition: background 0.15s; }
-    .resa-btn.confirm { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .resa-btn.danger { color: #A32D2D; border-color: #F7C1C1; }
-
-    /* ── My listings ── */
-    .listing-card { background: var(--bg2); border-radius: var(--radius); margin: 0 16px 12px; border: 0.5px solid var(--border); display: flex; gap: 12px; padding: 13px; align-items: center; }
-    .listing-thumb { width: 66px; height: 66px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; }
-    .listing-info { flex: 1; min-width: 0; }
-    .listing-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .listing-price { font-size: 13px; color: var(--text2); margin-top: 2px; }
-    .listing-stats { font-size: 11px; color: var(--text3); margin-top: 3px; }
-    .listing-actions { display: flex; flex-direction: column; gap: 6px; }
-    .icon-btn { width: 34px; height: 34px; border: 0.5px solid var(--border); border-radius: 8px; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; }
-    .icon-btn.del { border-color: #F7C1C1; background: #FCEBEB; }
-
-    /* ── Profile ── */
-    .profile-wrap { padding: 20px 16px 80px; }
-    .profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 26px; color: #fff; font-weight: 600; flex-shrink: 0; }
-    .profile-name { font-size: 19px; font-weight: 600; }
-    .profile-email { font-size: 13px; color: var(--text2); margin-top: 2px; }
-    .stats-row { display: flex; gap: 10px; margin-bottom: 20px; }
-    .stat-card { flex: 1; background: var(--bg2); border-radius: var(--radius); padding: 13px; text-align: center; border: 0.5px solid var(--border); }
-    .stat-num { font-size: 24px; font-weight: 600; color: var(--primary); }
-    .stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
-    .menu-list { background: var(--bg2); border-radius: var(--radius); border: 0.5px solid var(--border); overflow: hidden; }
-    .menu-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; cursor: pointer; border-bottom: 0.5px solid var(--border); transition: background 0.15s; }
-    .menu-item:last-child { border-bottom: none; }
-    .menu-item:active { background: var(--bg3); }
-    .menu-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
-    .menu-text { flex: 1; font-size: 14px; }
-    .menu-chev { font-size: 18px; color: var(--text3); }
-
-    /* ── Toast ── */
-    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(30px); background: var(--primary); color: #fff; border-radius: 12px; padding: 12px 20px; font-size: 13px; font-weight: 500; text-align: center; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; pointer-events: none; }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-    /* ── Empty state ── */
-    .empty { text-align: center; padding: 40px 20px; color: var(--text3); }
-    .empty-icon { font-size: 40px; margin-bottom: 10px; }
-    .empty p { font-size: 14px; }
+    :root{--bg:#f4f4f0;--bg2:#ffffff;--bg3:#ebebeb;--text:#1a1a2e;--text2:#6b6b7a;--text3:#a0a0b0;--border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.15);--primary:#1a1a2e;--accent:#e8a045;--radius:14px;--radius-lg:18px}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    #app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
+    .status-bar{background:var(--primary);height:env(safe-area-inset-top,0px);min-height:0}
+    .screen{display:none;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:70px}
+    .screen.active{display:flex}
+    .screen::-webkit-scrollbar{display:none}
+    .header{background:var(--primary);padding:18px 20px 16px;color:#fff;flex-shrink:0}
+    .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+    .header h1{font-size:20px;font-weight:600;color:#fff}
+    .header p{font-size:13px;color:rgba(255,255,255,.55)}
+    .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff;flex-shrink:0}
+    .search-wrap{padding:14px 16px 0}
+    .search-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;display:flex;align-items:center;padding:10px 12px;gap:8px}
+    .search-box input{border:none;background:transparent;font-size:14px;color:var(--text);flex:1;outline:none;font-family:'DM Sans',sans-serif}
+    .search-box input::placeholder{color:var(--text3)}
+    .search-btn{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .date-filter-wrap{padding:10px 16px 0}
+    .date-filter-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+    .date-filter-row{display:flex;gap:6px;align-items:center}
+    .date-filter-row input{flex:1;border:0.5px solid var(--border2);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--text);background:var(--bg2);font-family:'DM Sans',sans-serif;outline:none}
+    .date-filter-row span{font-size:11px;color:var(--text3)}
+    .clear-btn{background:transparent;border:0.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
+    .avail-pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:7px}
+    .avail-free{background:#EAF3DE;color:#3B6D11}
+    .avail-busy{background:#FCEBEB;color:#A32D2D}
+    .filters{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;flex-shrink:0}
+    .filters::-webkit-scrollbar{display:none}
+    .chip{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:6px 15px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .2s;flex-shrink:0}
+    .chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .section-lbl{padding:16px 16px 8px;font-size:12px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+    .apt-card{background:var(--bg2);border-radius:var(--radius-lg);margin:0 16px 14px;border:0.5px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .12s}
+    .apt-card:active{transform:scale(.98)}
+    .apt-card.occupied{border-color:#F7C1C1}
+    .apt-img{height:175px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:54px}
+    .apt-badge{position:absolute;top:10px;left:10px;background:rgba(26,26,46,.82);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500}
+    .apt-fav{position:absolute;top:10px;right:10px;width:32px;height:32px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border:none}
+    .occ-overlay{position:absolute;inset:0;background:rgba(163,45,45,.2);display:flex;align-items:center;justify-content:center}
+    .occ-label{background:#A32D2D;color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:20px}
+    .apt-body{padding:13px 15px 15px}
+    .apt-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px}
+    .apt-loc{font-size:12px;color:var(--text2);margin-bottom:6px}
+    .apt-row{display:flex;align-items:center;justify-content:space-between}
+    .apt-price{font-size:18px;font-weight:600;color:var(--primary)}
+    .apt-price span{font-size:12px;color:var(--text2);font-weight:400}
+    .apt-tags{display:flex;gap:6px}
+    .tag{background:var(--bg3);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--text2)}
+    .bottom-nav{position:absolute;bottom:0;left:0;right:0;height:62px;background:var(--bg2);border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 4px calc(env(safe-area-inset-bottom,0px));z-index:100}
+    .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px 10px;border-radius:10px;transition:background .15s;flex:1;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+    .nav-item svg{width:22px;height:22px;stroke:var(--text3);fill:none;stroke-width:1.8;transition:stroke .15s}
+    .nav-item .nav-lbl{font-size:10px;color:var(--text3);transition:color .15s}
+    .nav-item.active svg{stroke:var(--primary)}
+    .nav-item.active .nav-lbl{color:var(--primary);font-weight:600}
+    .detail-img{min-height:230px;position:relative;display:flex;align-items:center;justify-content:center;font-size:80px;flex-shrink:0}
+    .back-btn{position:absolute;top:14px;left:14px;width:36px;height:36px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none}
+    .detail-body{padding:18px 18px 100px}
+    .detail-title{font-size:21px;font-weight:600;margin-bottom:5px}
+    .detail-loc{font-size:13px;color:var(--text2);margin-bottom:14px}
+    .detail-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:18px}
+    .detail-price{font-size:26px;font-weight:600;color:var(--primary)}
+    .detail-price-unit{font-size:14px;color:var(--text2)}
+    .amenities{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .amenity{background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--text2)}
+    .detail-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px}
+    .date-label{font-size:14px;font-weight:600;margin-bottom:8px}
+    .date-row{display:flex;gap:10px;margin-bottom:10px}
+    .date-input{flex:1;border:0.5px solid var(--border2);border-radius:10px;padding:11px 12px;font-size:13px;color:var(--text);background:var(--bg2);font-family:'DM Sans',sans-serif;outline:none}
+    .avail-box{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
+    .avail-box.show{display:block}
+    .avail-box.ok{background:#EAF3DE;border:0.5px solid #C0DD97;color:#3B6D11}
+    .avail-box.err{background:#FCEBEB;border:0.5px solid #F7C1C1;color:#A32D2D}
+    .apt-info-row{background:var(--bg3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text2);margin-bottom:10px}
+    .reserve-btn{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:17px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .reserve-btn:disabled{background:#aaa;cursor:not-allowed}
+    .form-wrap{padding:18px 16px 80px}
+    .form-group{margin-bottom:15px}
+    .form-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:block}
+    .form-input{width:100%;border:0.5px solid var(--border2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);background:var(--bg2);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+    .form-input:focus{border-color:var(--primary)}
+    .form-row{display:flex;gap:10px}
+    .form-row .form-group{flex:1}
+    textarea.form-input{resize:none;line-height:1.6}
+    .img-picker{border:1.5px dashed var(--border2);border-radius:12px;padding:26px;text-align:center;cursor:pointer;background:var(--bg2)}
+    .img-picker-icon{font-size:30px;margin-bottom:8px}
+    .img-picker p{font-size:13px;color:var(--text2)}
+    .submit-btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:16px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px}
+    .resa-card{background:var(--bg2);border-radius:var(--radius);margin:0 16px 12px;border:0.5px solid var(--border);padding:14px}
+    .resa-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .resa-thumb{width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+    .resa-info{flex:1;min-width:0}
+    .resa-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .resa-dates{font-size:12px;color:var(--text2);margin-top:2px}
+    .resa-status{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;flex-shrink:0}
+    .s-pending{background:#FAEEDA;color:#854F0B}
+    .s-confirmed{background:#EAF3DE;color:#3B6D11}
+    .s-cancelled{background:#FCEBEB;color:#A32D2D}
+    .s-released{background:#E6F1FB;color:#185FA5}
+    .resa-total{font-size:13px;color:var(--text2);margin-bottom:10px}
+    .resa-total strong{color:var(--text)}
+    .resa-footer{display:flex;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:0.5px solid var(--border)}
+    .resa-btn{flex:1;border:0.5px solid var(--border2);border-radius:8px;padding:9px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:transparent;color:var(--text);transition:background .15s;min-width:70px}
+    .resa-btn.confirm{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .resa-btn.danger{color:#A32D2D;border-color:#F7C1C1}
+    .resa-btn.release{color:#185FA5;border-color:#B5D4F4}
+    .listing-card{background:var(--bg2);border-radius:var(--radius);margin:0 16px 12px;border:0.5px solid var(--border);display:flex;gap:12px;padding:13px;align-items:center}
+    .listing-thumb{width:66px;height:66px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+    .listing-info{flex:1;min-width:0}
+    .listing-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .listing-price{font-size:13px;color:var(--text2);margin-top:2px}
+    .listing-stats{font-size:11px;color:var(--text3);margin-top:3px}
+    .listing-actions{display:flex;flex-direction:column;gap:6px}
+    .icon-btn{width:34px;height:34px;border:0.5px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px}
+    .icon-btn.del{border-color:#F7C1C1;background:#FCEBEB}
+    .profile-wrap{padding:20px 16px 80px}
+    .profile-header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+    .profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:600;flex-shrink:0}
+    .profile-name{font-size:19px;font-weight:600}
+    .profile-email{font-size:13px;color:var(--text2);margin-top:2px}
+    .stats-row{display:flex;gap:10px;margin-bottom:20px}
+    .stat-card{flex:1;background:var(--bg2);border-radius:var(--radius);padding:13px;text-align:center;border:0.5px solid var(--border)}
+    .stat-num{font-size:24px;font-weight:600;color:var(--primary)}
+    .stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
+    .menu-list{background:var(--bg2);border-radius:var(--radius);border:0.5px solid var(--border);overflow:hidden}
+    .menu-item{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .15s}
+    .menu-item:last-child{border-bottom:none}
+    .menu-item:active{background:var(--bg3)}
+    .menu-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+    .menu-text{flex:1;font-size:14px}
+    .menu-chev{font-size:18px;color:var(--text3)}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--primary);color:#fff;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:500;text-align:center;opacity:0;transition:all .3s;z-index:999;white-space:pre-wrap;pointer-events:none;max-width:340px;line-height:1.4}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+    .toast.err{background:#A32D2D}
+    .empty{text-align:center;padding:40px 20px;color:var(--text3)}
+    .empty-icon{font-size:40px;margin-bottom:10px}
+    .empty p{font-size:14px}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+    .modal-overlay.show{opacity:1;pointer-events:all}
+    .modal{background:var(--bg2);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;transform:translateY(100%);transition:transform .3s}
+    .modal-overlay.show .modal{transform:translateY(0)}
+    .modal-title{font-size:17px;font-weight:600;margin-bottom:10px}
+    .modal-body{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px}
+    .modal-btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
   </style>
 </head>
 <body>
 <div id="app">
   <div class="status-bar"></div>
 
-  <!-- ═══ HOME ═══ -->
+  <!-- HOME -->
   <div class="screen active" id="screen-home">
     <div class="header">
       <div class="header-top">
-        <div>
-          <h1>Bonjour, Ahmed 👋</h1>
-          <p>Trouvez votre appartement idéal</p>
-        </div>
+        <div><h1>Bonjour, Ahmed 👋</h1><p>Trouvez votre appartement idéal</p></div>
         <div class="avatar">AH</div>
       </div>
     </div>
@@ -196,6 +175,15 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a0b0" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="search-input" placeholder="Rechercher une ville, quartier…" />
         <button class="search-btn" onclick="doSearch()">Chercher</button>
+      </div>
+    </div>
+    <div class="date-filter-wrap">
+      <div class="date-filter-label">Filtrer par disponibilité</div>
+      <div class="date-filter-row">
+        <input type="date" id="filter-from" onchange="renderApts()" />
+        <span>→</span>
+        <input type="date" id="filter-to" onchange="renderApts()" />
+        <button class="clear-btn" onclick="clearDateFilter()">✕ Effacer</button>
       </div>
     </div>
     <div class="filters" id="home-filters">
@@ -209,70 +197,39 @@
     <div id="apt-list"></div>
   </div>
 
-  <!-- ═══ DETAIL ═══ -->
-  <div class="screen" id="screen-detail">
-    <div id="detail-content"></div>
-  </div>
+  <!-- DETAIL -->
+  <div class="screen" id="screen-detail"><div id="detail-content"></div></div>
 
-  <!-- ═══ DEPOSIT ═══ -->
+  <!-- DEPOSIT -->
   <div class="screen" id="screen-deposit">
     <div class="header">
       <div class="header-top"><h1>Déposer une annonce</h1></div>
       <p>Publiez votre appartement en quelques étapes</p>
     </div>
     <div class="form-wrap">
-      <div class="form-group">
-        <label class="form-label">Titre de l'annonce</label>
-        <input class="form-input" id="dep-title" placeholder="Ex: Appartement moderne vue mer" />
+      <div class="form-group"><label class="form-label">Titre de l'annonce</label><input class="form-input" id="dep-title" placeholder="Ex: Appartement moderne vue mer" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="dep-city" placeholder="Tunis" /></div>
+        <div class="form-group"><label class="form-label">Quartier</label><input class="form-input" id="dep-quartier" placeholder="Lac 2" /></div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Ville</label>
-          <input class="form-input" id="dep-city" placeholder="Tunis" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Quartier</label>
-          <input class="form-input" id="dep-quartier" placeholder="Lac 2" />
-        </div>
+        <div class="form-group"><label class="form-label">Prix / nuit (DT)</label><input class="form-input" type="number" id="dep-price" placeholder="150" /></div>
+        <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="dep-type"><option>Studio</option><option>F2</option><option>F3</option><option>F4+</option></select></div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Prix / nuit (DT)</label>
-          <input class="form-input" type="number" id="dep-price" placeholder="150" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <select class="form-input" id="dep-type">
-            <option>Studio</option><option>F2</option><option>F3</option><option>F4+</option>
-          </select>
-        </div>
+        <div class="form-group"><label class="form-label">Chambres</label><input class="form-input" type="number" id="dep-rooms" placeholder="2" /></div>
+        <div class="form-group"><label class="form-label">Surface (m²)</label><input class="form-input" type="number" id="dep-surface" placeholder="75" /></div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Chambres</label>
-          <input class="form-input" type="number" id="dep-rooms" placeholder="2" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Surface (m²)</label>
-          <input class="form-input" type="number" id="dep-surface" placeholder="75" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Description</label>
-        <textarea class="form-input" id="dep-desc" rows="3" placeholder="Décrivez votre appartement…"></textarea>
-      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="dep-desc" rows="3" placeholder="Décrivez votre appartement…"></textarea></div>
       <div class="form-group">
         <label class="form-label">Photos</label>
-        <div class="img-picker" onclick="toast('Sélection de photos activée')">
-          <div class="img-picker-icon">📷</div>
-          <p>Appuyez pour ajouter des photos</p>
-        </div>
+        <div class="img-picker" onclick="toast('Sélection de photos activée')"><div class="img-picker-icon">📷</div><p>Appuyez pour ajouter des photos</p></div>
       </div>
       <button class="submit-btn" onclick="submitListing()">Publier l'annonce</button>
     </div>
   </div>
 
-  <!-- ═══ RESERVATIONS ═══ -->
+  <!-- RESERVATIONS -->
   <div class="screen" id="screen-reservations">
     <div class="header">
       <div class="header-top"><h1>Mes réservations</h1></div>
@@ -282,12 +239,13 @@
       <div class="chip active" onclick="setResaTab('all',this)">Toutes</div>
       <div class="chip" onclick="setResaTab('pending',this)">En attente</div>
       <div class="chip" onclick="setResaTab('confirmed',this)">Confirmées</div>
+      <div class="chip" onclick="setResaTab('released',this)">Libérées</div>
     </div>
     <div class="section-lbl" id="resa-count">3 réservations</div>
     <div id="resa-list"></div>
   </div>
 
-  <!-- ═══ MY LISTINGS ═══ -->
+  <!-- MY LISTINGS -->
   <div class="screen" id="screen-listings">
     <div class="header">
       <div class="header-top"><h1>Mes annonces</h1></div>
@@ -297,52 +255,29 @@
     <div id="my-listings"></div>
   </div>
 
-  <!-- ═══ PROFILE ═══ -->
+  <!-- PROFILE -->
   <div class="screen" id="screen-profile">
     <div class="profile-wrap">
       <div class="profile-header">
         <div class="profile-avatar">AH</div>
-        <div>
-          <div class="profile-name">Ahmed Hamdi</div>
-          <div class="profile-email">ahmed.hamdi@email.com</div>
-        </div>
+        <div><div class="profile-name">Ahmed Hamdi</div><div class="profile-email">ahmed.hamdi@email.com</div></div>
       </div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-num" id="stat-apts">3</div><div class="stat-lbl">Annonces</div></div>
-        <div class="stat-card"><div class="stat-num">3</div><div class="stat-lbl">Réservations</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-resas">3</div><div class="stat-lbl">Réservations</div></div>
         <div class="stat-card"><div class="stat-num">4.8</div><div class="stat-lbl">Note ★</div></div>
       </div>
       <div class="menu-list">
-        <div class="menu-item" onclick="toast('Modification du profil')">
-          <div class="menu-icon" style="background:#E6F1FB">👤</div>
-          <span class="menu-text">Modifier le profil</span>
-          <span class="menu-chev">›</span>
-        </div>
-        <div class="menu-item" onclick="toast('Notifications')">
-          <div class="menu-icon" style="background:#EAF3DE">🔔</div>
-          <span class="menu-text">Notifications</span>
-          <span class="menu-chev">›</span>
-        </div>
-        <div class="menu-item" onclick="toast('Paiements')">
-          <div class="menu-icon" style="background:#FAEEDA">💳</div>
-          <span class="menu-text">Paiements</span>
-          <span class="menu-chev">›</span>
-        </div>
-        <div class="menu-item" onclick="toast('Centre d\'aide')">
-          <div class="menu-icon" style="background:#FBEAF0">❓</div>
-          <span class="menu-text">Centre d'aide</span>
-          <span class="menu-chev">›</span>
-        </div>
-        <div class="menu-item" onclick="toast('Déconnexion effectuée')">
-          <div class="menu-icon" style="background:#FCEBEB">🚪</div>
-          <span class="menu-text" style="color:#A32D2D">Déconnexion</span>
-          <span class="menu-chev" style="color:#A32D2D">›</span>
-        </div>
+        <div class="menu-item" onclick="toast('Modification du profil')"><div class="menu-icon" style="background:#E6F1FB">👤</div><span class="menu-text">Modifier le profil</span><span class="menu-chev">›</span></div>
+        <div class="menu-item" onclick="toast('Notifications')"><div class="menu-icon" style="background:#EAF3DE">🔔</div><span class="menu-text">Notifications</span><span class="menu-chev">›</span></div>
+        <div class="menu-item" onclick="toast('Paiements')"><div class="menu-icon" style="background:#FAEEDA">💳</div><span class="menu-text">Paiements</span><span class="menu-chev">›</span></div>
+        <div class="menu-item" onclick="toast('Centre d\'aide')"><div class="menu-icon" style="background:#FBEAF0">❓</div><span class="menu-text">Centre d'aide</span><span class="menu-chev">›</span></div>
+        <div class="menu-item" onclick="toast('Déconnexion')"><div class="menu-icon" style="background:#FCEBEB">🚪</div><span class="menu-text" style="color:#A32D2D">Déconnexion</span><span class="menu-chev" style="color:#A32D2D">›</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ BOTTOM NAV ═══ -->
+  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-item active" id="nav-home" onclick="navigate('home')">
       <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -366,50 +301,100 @@
     </button>
   </nav>
 
+  <!-- Modal générique -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">Information</div>
+      <div class="modal-body" id="modal-body"></div>
+      <button class="modal-btn" onclick="closeModal()">Fermer</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast-el"></div>
 </div>
 
 <script>
-// ── Data ──
+// ══ DATA ══
 const apartments = [
-  { id:1, title:"Studio moderne Lac 2", loc:"Tunis, Lac 2", price:120, type:"Studio", rooms:1, surface:42, emoji:"🏙️", color:"#B5D4F4", desc:"Studio entièrement équipé, climatisé, proche du métro. Vue panoramique sur le lac.", amenities:["📶 WiFi","❄️ Clim","🅿️ Parking","🏊 Piscine"], badge:"Nouveau", resa:2 },
-  { id:2, title:"Appartement F3 Marsa Plage", loc:"La Marsa, Front de mer", price:280, type:"F3", rooms:3, surface:95, emoji:"🌊", color:"#9FE1CB", desc:"Magnifique F3 avec terrasse vue mer. Idéal pour familles et groupes d'amis.", amenities:["📶 WiFi","🌅 Terrasse","🍳 Cuisine","🚗 Garage"], badge:"Top rated", resa:5 },
-  { id:3, title:"Duplex luxueux Ennasr", loc:"Ariana, Ennasr 2", price:450, type:"F4+", rooms:4, surface:160, emoji:"🏛️", color:"#FAC775", desc:"Somptueux duplex meublé avec tout le confort haut de gamme. Jacuzzi, gym privé.", amenities:["📶 WiFi","🏋️ Gym","🛁 Jacuzzi","🔒 Sécurité"], badge:"Luxe", resa:1 },
-  { id:4, title:"Cosy F2 centre-ville", loc:"Tunis, Centre-ville", price:95, type:"F2", rooms:2, surface:58, emoji:"🏘️", color:"#F5C4B3", desc:"Appartement chaleureux au cœur de Tunis, à deux pas du métro et des commerces.", amenities:["📶 WiFi","❄️ Clim","🚇 Métro","🛒 Commerces"], badge:null, resa:3 },
-  { id:5, title:"Villa familiale Hammamet", loc:"Hammamet, Zone touristique", price:380, type:"F4+", rooms:5, surface:200, emoji:"🏖️", color:"#C0DD97", desc:"Grande villa avec jardin et piscine privée. Idéale pour les vacances en famille.", amenities:["🏊 Piscine","🌿 Jardin","🚗 2 Parkings","🔥 BBQ"], badge:"Populaire", resa:4 },
+  {id:1,title:"Studio moderne Lac 2",      loc:"Tunis, Lac 2",              price:120,type:"Studio",rooms:1,surface:42, emoji:"🏙️",color:"#B5D4F4",desc:"Studio entièrement équipé, climatisé, proche du métro. Vue panoramique sur le lac.",           amenities:["📶 WiFi","❄️ Clim","🅿️ Parking","🏊 Piscine"],  badge:"Nouveau",  resa:2},
+  {id:2,title:"Appartement F3 Marsa Plage",loc:"La Marsa, Front de mer",    price:280,type:"F3",    rooms:3,surface:95, emoji:"🌊",color:"#9FE1CB",desc:"Magnifique F3 avec terrasse vue mer. Idéal pour familles.",                                      amenities:["📶 WiFi","🌅 Terrasse","🍳 Cuisine","🚗 Garage"], badge:"Top rated",resa:5},
+  {id:3,title:"Duplex luxueux Ennasr",     loc:"Ariana, Ennasr 2",          price:450,type:"F4+",  rooms:4,surface:160,emoji:"🏛️",color:"#FAC775",desc:"Somptueux duplex meublé avec jacuzzi et gym privé.",                                              amenities:["📶 WiFi","🏋️ Gym","🛁 Jacuzzi","🔒 Sécurité"],  badge:"Luxe",     resa:1},
+  {id:4,title:"Cosy F2 centre-ville",      loc:"Tunis, Centre-ville",       price:95, type:"F2",   rooms:2,surface:58, emoji:"🏘️",color:"#F5C4B3",desc:"Appartement chaleureux au cœur de Tunis, proche du métro.",                                       amenities:["📶 WiFi","❄️ Clim","🚇 Métro","🛒 Commerces"],   badge:null,       resa:3},
+  {id:5,title:"Villa familiale Hammamet",  loc:"Hammamet, Zone touristique",price:380,type:"F4+",  rooms:5,surface:200,emoji:"🏖️",color:"#C0DD97",desc:"Grande villa avec jardin et piscine privée, idéale pour les vacances en famille.",                  amenities:["🏊 Piscine","🌿 Jardin","🚗 2 Parkings","🔥 BBQ"],badge:"Populaire",resa:4},
 ];
-
 const myListingIds = [1,2,3];
-
+// status: pending | confirmed | cancelled | released
 const reservations = [
-  { id:1, aptId:1, from:"15 Avr 2025", to:"18 Avr 2025", nights:3, status:"pending",   guest:"Sara Ben Ali",        total:360  },
-  { id:2, aptId:2, from:"20 Avr 2025", to:"25 Avr 2025", nights:5, status:"confirmed", guest:"Mohamed Trabelsi",    total:1400 },
-  { id:3, aptId:3, from:"01 Mai 2025", to:"03 Mai 2025", nights:2, status:"cancelled", guest:"Leila Gharbi",         total:900  },
+  {id:1,aptId:1,from:"2025-04-15",to:"2025-04-18",nights:3,status:"pending",  guest:"Sara Ben Ali",    total:360},
+  {id:2,aptId:2,from:"2025-04-20",to:"2025-04-25",nights:5,status:"confirmed",guest:"Mohamed Trabelsi",total:1400},
+  {id:3,aptId:3,from:"2025-05-01",to:"2025-05-03",nights:2,status:"cancelled",guest:"Leila Gharbi",    total:900},
 ];
+let currentFilter="all", currentResaTab="all";
 
-let currentFilter  = "all";
-let currentResaTab = "all";
+// ══ HELPERS ══
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const addDay=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const fmtDate=s=>{if(!s)return"";const[y,m,d]=s.split("-");return`${d}/${m}/${y}`};
 
-// ── Render apartments ──
-function renderApts() {
-  const q = (document.getElementById("search-input").value || "").toLowerCase();
-  let list = apartments;
-  if (q) list = list.filter(a => a.title.toLowerCase().includes(q) || a.loc.toLowerCase().includes(q));
-  if (currentFilter !== "all") {
-    if (currentFilter === "luxe") list = list.filter(a => a.price > 350);
-    else list = list.filter(a => a.type.toLowerCase() === currentFilter);
-  }
-  document.getElementById("home-count").textContent = list.length + " annonce(s) disponible(s)";
-  document.getElementById("apt-list").innerHTML = list.length ? list.map(aptCard).join("") : `<div class="empty"><div class="empty-icon">🔍</div><p>Aucune annonce trouvée</p></div>`;
+// Overlap check: returns true if [f1,t1) overlaps [f2,t2)
+const overlaps=(f1,t1,f2,t2)=>f1<t2&&t1>f2;
+
+// Returns active (pending|confirmed) reservations that conflict with [from,to] for aptId
+function getConflicts(aptId,from,to){
+  return reservations.filter(r=>
+    r.aptId===aptId&&
+    (r.status==="pending"||r.status==="confirmed")&&
+    overlaps(from,to,r.from,r.to)
+  );
+}
+function isOccupied(aptId,from,to){return getConflicts(aptId,from,to).length>0}
+
+// Auto-release confirmed reservations whose end date has passed
+function autoRelease(){
+  const today=todayStr();
+  reservations.forEach(r=>{if(r.status==="confirmed"&&r.to<=today)r.status="released";});
 }
 
-function aptCard(a) {
-  return `<div class="apt-card" onclick="showDetail(${a.id})">
+// ══ RENDER APARTMENTS ══
+function renderApts(){
+  autoRelease();
+  const q=(document.getElementById("search-input").value||"").toLowerCase();
+  const fd=document.getElementById("filter-from").value;
+  const td=document.getElementById("filter-to").value;
+  const hasDate=fd&&td&&fd<td;
+
+  let list=[...apartments];
+  if(q)list=list.filter(a=>a.title.toLowerCase().includes(q)||a.loc.toLowerCase().includes(q));
+  if(currentFilter!=="all"){
+    if(currentFilter==="luxe")list=list.filter(a=>a.price>350);
+    else list=list.filter(a=>a.type.toLowerCase()===currentFilter);
+  }
+
+  // Annotate availability
+  list=list.map(a=>({...a,busy:hasDate?isOccupied(a.id,fd,td):false,hasDate}));
+  if(hasDate)list.sort((a,b)=>a.busy-b.busy); // free first
+
+  const freeCount=hasDate?list.filter(a=>!a.busy).length:list.length;
+  document.getElementById("home-count").textContent=hasDate
+    ?`🟢 ${freeCount} libre(s)  ·  🔴 ${list.length-freeCount} occupé(s)`
+    :`${list.length} annonce(s) disponible(s)`;
+
+  document.getElementById("apt-list").innerHTML=list.length
+    ?list.map(aptCardHtml).join("")
+    :`<div class="empty"><div class="empty-icon">🔍</div><p>Aucune annonce trouvée</p></div>`;
+}
+
+function aptCardHtml(a){
+  const pill=a.hasDate?`<div class="avail-pill ${a.busy?'avail-busy':'avail-free'}">${a.busy?'🔴 Occupé':'🟢 Libre'}</div>`:"";
+  const overlay=a.busy?`<div class="occ-overlay"><div class="occ-label">Occupé</div></div>`:"";
+  return`<div class="apt-card${a.busy?' occupied':''}" onclick="showDetail(${a.id})">
     <div class="apt-img" style="background:${a.color}">${a.emoji}
-      ${a.badge ? `<div class="apt-badge">${a.badge}</div>` : ""}
+      ${a.badge?`<div class="apt-badge">${a.badge}</div>`:""}
       <button class="apt-fav" onclick="event.stopPropagation();toast('Ajouté aux favoris ❤️')">♡</button>
+      ${overlay}
     </div>
     <div class="apt-body">
+      ${pill}
       <div class="apt-title">${a.title}</div>
       <div class="apt-loc">📍 ${a.loc}</div>
       <div class="apt-row">
@@ -420,196 +405,225 @@ function aptCard(a) {
   </div>`;
 }
 
-function setFilter(el, f) {
-  document.querySelectorAll("#home-filters .chip").forEach(c => c.classList.remove("active"));
-  el.classList.add("active");
-  currentFilter = f;
+function setFilter(el,f){
+  document.querySelectorAll("#home-filters .chip").forEach(c=>c.classList.remove("active"));
+  el.classList.add("active"); currentFilter=f; renderApts();
+}
+function doSearch(){renderApts();}
+function clearDateFilter(){
+  document.getElementById("filter-from").value="";
+  document.getElementById("filter-to").value="";
   renderApts();
 }
 
-function doSearch() { renderApts(); }
-
-// ── Detail ──
-function showDetail(id) {
-  const a = apartments.find(x => x.id === id);
-  if (!a) return;
-  document.getElementById("detail-content").innerHTML = `
-    <div class="detail-img" style="background:${a.color}">
-      ${a.emoji}
+// ══ DETAIL ══
+function showDetail(id){
+  const a=apartments.find(x=>x.id===id);if(!a)return;
+  document.getElementById("detail-content").innerHTML=`
+    <div class="detail-img" style="background:${a.color}">${a.emoji}
       <button class="back-btn" onclick="navigate('home')">←</button>
     </div>
     <div class="detail-body">
       <div class="detail-title">${a.title}</div>
-      <div class="detail-loc">📍 ${a.loc} &nbsp;·&nbsp; ⭐ 4.8 (${a.resa * 3} avis)</div>
-      <div class="detail-price-row">
-        <div class="detail-price">${a.price} DT</div>
-        <div class="detail-price-unit">/ nuit</div>
-      </div>
-      <div class="amenities">${a.amenities.map(am => `<div class="amenity">${am}</div>`).join("")}</div>
+      <div class="detail-loc">📍 ${a.loc} &nbsp;·&nbsp; ⭐ 4.8 (${a.resa*3} avis)</div>
+      <div class="detail-price-row"><div class="detail-price">${a.price} DT</div><div class="detail-price-unit">/ nuit</div></div>
+      <div class="amenities">${a.amenities.map(am=>`<div class="amenity">${am}</div>`).join("")}</div>
       <p class="detail-desc">${a.desc}</p>
       <div class="date-label">Sélectionnez les dates</div>
       <div class="date-row">
-        <input type="date" class="date-input" id="date-from" />
-        <input type="date" class="date-input" id="date-to" />
+        <input type="date" class="date-input" id="date-from" onchange="checkAvail(${a.id})" />
+        <input type="date" class="date-input" id="date-to"   onchange="checkAvail(${a.id})" />
       </div>
+      <div class="avail-box" id="avail-box"></div>
       <div class="apt-info-row">🛏️ ${a.rooms} chambre(s) &nbsp;·&nbsp; 📐 ${a.surface} m² &nbsp;·&nbsp; 🏠 ${a.type}</div>
     </div>
-    <button class="reserve-btn" onclick="makeReservation(${a.id})">Réserver maintenant</button>`;
+    <button class="reserve-btn" id="reserve-btn" onclick="makeReservation(${a.id})">Réserver maintenant</button>`;
   showScreen("detail");
 }
 
-function makeReservation(id) {
-  const f = document.getElementById("date-from").value;
-  const t = document.getElementById("date-to").value;
-  if (!f || !t) { toast("⚠️ Veuillez sélectionner les dates"); return; }
-  if (f >= t)   { toast("⚠️ La date de fin doit être après le début"); return; }
-  const a = apartments.find(x => x.id === id);
-  const nights = Math.ceil((new Date(t) - new Date(f)) / 86400000);
-  reservations.push({ id: Date.now(), aptId: id, from: f, to: t, nights, status: "pending", guest: "Ahmed Hamdi", total: a.price * nights });
+function checkAvail(aptId){
+  const f=document.getElementById("date-from").value;
+  const t=document.getElementById("date-to").value;
+  const box=document.getElementById("avail-box");
+  const btn=document.getElementById("reserve-btn");
+  box.className="avail-box";
+  if(!f||!t){btn.disabled=false;return;}
+  if(f>=t){box.textContent="⚠️ La date de fin doit être après la date de début.";box.classList.add("show","err");btn.disabled=true;return;}
+  const conflicts=getConflicts(aptId,f,t);
+  if(conflicts.length){
+    const lines=conflicts.map(c=>`  • ${fmtDate(c.from)} → ${fmtDate(c.to)} (${c.status==="confirmed"?"Confirmée":"En attente"})`).join("\n");
+    box.textContent=`⚠️ Déjà réservé sur ces dates :\n${lines}\nVeuillez choisir d'autres dates.`;
+    box.classList.add("show","err"); btn.disabled=true;
+  } else {
+    const nights=Math.ceil((new Date(t)-new Date(f))/86400000);
+    const a=apartments.find(x=>x.id===aptId);
+    box.textContent=`✅ Disponible ! ${nights} nuit(s) · Total estimé : ${a.price*nights} DT`;
+    box.classList.add("show","ok"); btn.disabled=false;
+  }
+}
+
+function makeReservation(id){
+  const f=document.getElementById("date-from").value;
+  const t=document.getElementById("date-to").value;
+  if(!f||!t){toast("⚠️ Veuillez sélectionner les dates",true);return;}
+  if(f>=t){toast("⚠️ La date de fin doit être après le début",true);return;}
+  const conflicts=getConflicts(id,f,t);
+  if(conflicts.length){
+    const detail=conflicts.map(c=>`• ${fmtDate(c.from)} → ${fmtDate(c.to)}`).join("\n");
+    showModal("⚠️ Conflit de réservation",`Cet appartement est déjà réservé :\n${detail}\n\nVeuillez choisir d'autres dates.`);
+    return;
+  }
+  const a=apartments.find(x=>x.id===id);
+  const nights=Math.ceil((new Date(t)-new Date(f))/86400000);
+  reservations.push({id:Date.now(),aptId:id,from:f,to:t,nights,status:"pending",guest:"Ahmed Hamdi",total:a.price*nights});
   toast("✅ Réservation envoyée !");
-  setTimeout(() => navigate("reservations"), 1200);
+  setTimeout(()=>navigate("reservations"),1200);
 }
 
-// ── Deposit ──
-function submitListing() {
-  const title    = document.getElementById("dep-title").value.trim();
-  const city     = document.getElementById("dep-city").value.trim();
-  const quartier = document.getElementById("dep-quartier").value.trim();
-  const price    = parseInt(document.getElementById("dep-price").value);
-  if (!title || !city || !price) { toast("⚠️ Remplissez les champs obligatoires"); return; }
-  const emojis = ["🏠","🏡","🏢","🏰","🏗️","🏬"];
-  const colors = ["#B5D4F4","#9FE1CB","#FAC775","#F5C4B3","#C0DD97","#CCC0F0"];
-  const newId  = Date.now();
-  apartments.unshift({
-    id: newId,
-    title,
-    loc: `${city}${quartier ? ", " + quartier : ""}`,
-    price,
-    type:    document.getElementById("dep-type").value,
-    rooms:   parseInt(document.getElementById("dep-rooms").value)   || 1,
-    surface: parseInt(document.getElementById("dep-surface").value) || 50,
-    emoji:   emojis[Math.floor(Math.random() * emojis.length)],
-    color:   colors[Math.floor(Math.random() * colors.length)],
-    desc:    document.getElementById("dep-desc").value || "Appartement disponible à la location.",
-    amenities: ["📶 WiFi","❄️ Clim"],
-    badge: "Nouveau",
-    resa: 0,
-  });
+// ══ DEPOSIT ══
+function submitListing(){
+  const title=document.getElementById("dep-title").value.trim();
+  const city=document.getElementById("dep-city").value.trim();
+  const quartier=document.getElementById("dep-quartier").value.trim();
+  const price=parseInt(document.getElementById("dep-price").value);
+  if(!title||!city||!price){toast("⚠️ Remplissez les champs obligatoires",true);return;}
+  const emojis=["🏠","🏡","🏢","🏰","🏗️","🏬"];
+  const colors=["#B5D4F4","#9FE1CB","#FAC775","#F5C4B3","#C0DD97","#CCC0F0"];
+  const newId=Date.now();
+  apartments.unshift({id:newId,title,loc:`${city}${quartier?", "+quartier:""}`,price,type:document.getElementById("dep-type").value,rooms:parseInt(document.getElementById("dep-rooms").value)||1,surface:parseInt(document.getElementById("dep-surface").value)||50,emoji:emojis[Math.floor(Math.random()*emojis.length)],color:colors[Math.floor(Math.random()*colors.length)],desc:document.getElementById("dep-desc").value||"Appartement disponible à la location.",amenities:["📶 WiFi","❄️ Clim"],badge:"Nouveau",resa:0});
   myListingIds.push(newId);
-  ["dep-title","dep-city","dep-quartier","dep-price","dep-rooms","dep-surface","dep-desc"].forEach(id => { document.getElementById(id).value = ""; });
+  ["dep-title","dep-city","dep-quartier","dep-price","dep-rooms","dep-surface","dep-desc"].forEach(id=>{document.getElementById(id).value="";});
   toast("✅ Annonce publiée !");
-  setTimeout(() => navigate("listings"), 1200);
+  setTimeout(()=>navigate("listings"),1200);
 }
 
-// ── Reservations ──
-function renderReservations() {
-  let list = reservations;
-  if (currentResaTab === "pending")   list = list.filter(r => r.status === "pending");
-  if (currentResaTab === "confirmed") list = list.filter(r => r.status === "confirmed");
-  document.getElementById("resa-count").textContent = list.length + " réservation(s)";
-  const sl = { pending:"s-pending", confirmed:"s-confirmed", cancelled:"s-cancelled" };
-  const st = { pending:"En attente", confirmed:"Confirmée", cancelled:"Annulée" };
-  document.getElementById("resa-list").innerHTML = list.length ? list.map(r => {
-    const a = apartments.find(x => x.id === r.aptId) || { title:"Appartement supprimé", emoji:"🏠", color:"#eee" };
-    return `<div class="resa-card">
+// ══ RESERVATIONS ══
+function renderReservations(){
+  autoRelease();
+  let list=reservations;
+  if(currentResaTab==="pending")   list=list.filter(r=>r.status==="pending");
+  if(currentResaTab==="confirmed") list=list.filter(r=>r.status==="confirmed");
+  if(currentResaTab==="released")  list=list.filter(r=>r.status==="released");
+  document.getElementById("resa-count").textContent=list.length+" réservation(s)";
+  document.getElementById("stat-resas").textContent=reservations.length;
+  const sl={pending:"s-pending",confirmed:"s-confirmed",cancelled:"s-cancelled",released:"s-released"};
+  const st={pending:"En attente",confirmed:"Confirmée",cancelled:"Annulée",released:"Libéré"};
+  document.getElementById("resa-list").innerHTML=list.length?list.map(r=>{
+    const a=apartments.find(x=>x.id===r.aptId)||{title:"Appartement supprimé",emoji:"🏠",color:"#eee"};
+    const canRelease=r.status==="confirmed"&&r.to<=todayStr();
+    return`<div class="resa-card">
       <div class="resa-header">
         <div class="resa-thumb" style="background:${a.color}">${a.emoji}</div>
         <div class="resa-info">
           <div class="resa-title">${a.title}</div>
-          <div class="resa-dates">📅 ${r.from} → ${r.to} · ${r.nights} nuit(s)</div>
+          <div class="resa-dates">📅 ${fmtDate(r.from)} → ${fmtDate(r.to)} · ${r.nights} nuit(s)</div>
           <div class="resa-dates">👤 ${r.guest}</div>
         </div>
         <div class="resa-status ${sl[r.status]}">${st[r.status]}</div>
       </div>
       <div class="resa-total">Total : <strong>${r.total} DT</strong></div>
       <div class="resa-footer">
-        ${r.status === "pending"    ? `<button class="resa-btn confirm" onclick="confirmResa(${r.id})">✓ Valider</button>` : ""}
-        ${r.status !== "cancelled" ? `<button class="resa-btn danger"  onclick="cancelResa(${r.id})">✕ Annuler</button>` : ""}
-        <button class="resa-btn" onclick="toast('Détails réservation #${r.id}')">Détails</button>
+        ${r.status==="pending"?`<button class="resa-btn confirm" onclick="confirmResa(${r.id})">✓ Valider</button>`:""}
+        ${(r.status==="pending"||r.status==="confirmed")?`<button class="resa-btn danger" onclick="cancelResa(${r.id})">✕ Annuler</button>`:""}
+        ${canRelease?`<button class="resa-btn release" onclick="releaseResa(${r.id})">🔓 Libérer</button>`:""}
+        <button class="resa-btn" onclick="showResaDetail(${r.id})">Détails</button>
       </div>
     </div>`;
-  }).join("") : `<div class="empty"><div class="empty-icon">📅</div><p>Aucune réservation</p></div>`;
+  }).join(""):`<div class="empty"><div class="empty-icon">📅</div><p>Aucune réservation</p></div>`;
 }
 
-function confirmResa(id) {
-  const r = reservations.find(x => x.id === id);
-  if (r) { r.status = "confirmed"; renderReservations(); toast("✅ Réservation confirmée !"); }
-}
-function cancelResa(id) {
-  const r = reservations.find(x => x.id === id);
-  if (r) { r.status = "cancelled"; renderReservations(); toast("Réservation annulée"); }
-}
-function setResaTab(tab, el) {
-  document.querySelectorAll("#screen-reservations .chip").forEach(c => c.classList.remove("active"));
-  el.classList.add("active");
-  currentResaTab = tab;
-  renderReservations();
+function confirmResa(id){const r=reservations.find(x=>x.id===id);if(r){r.status="confirmed";renderReservations();toast("✅ Réservation confirmée !");}}
+
+function cancelResa(id){
+  const r=reservations.find(x=>x.id===id);
+  if(r){
+    r.status="cancelled";
+    renderReservations();
+    renderApts(); // appartement redevient libre
+    toast("Réservation annulée — appartement libéré 🔓");
+  }
 }
 
-// ── My listings ──
-function renderMyListings() {
-  const mine = apartments.filter(a => myListingIds.includes(a.id));
-  document.getElementById("listings-count").textContent = mine.length + " annonce(s) active(s)";
-  document.getElementById("stat-apts").textContent = mine.length;
-  document.getElementById("my-listings").innerHTML = mine.length ? mine.map(a => `
-    <div class="listing-card" id="lcard-${a.id}">
+function releaseResa(id){
+  const r=reservations.find(x=>x.id===id);
+  if(r){r.status="released";renderReservations();renderApts();toast("🔓 Appartement libéré avec succès !");}
+}
+
+function showResaDetail(id){
+  const r=reservations.find(x=>x.id===id);
+  const a=apartments.find(x=>x.id===r.aptId);
+  const st={pending:"En attente",confirmed:"Confirmée",cancelled:"Annulée",released:"Libéré"};
+  showModal("Détails réservation",`Appartement : ${a?a.title:"(supprimé)"}\n📅 ${fmtDate(r.from)} → ${fmtDate(r.to)}\n🌙 ${r.nights} nuit(s)\n👤 ${r.guest}\n💰 Total : ${r.total} DT\n📌 Statut : ${st[r.status]}`);
+}
+
+function setResaTab(tab,el){
+  document.querySelectorAll("#screen-reservations .chip").forEach(c=>c.classList.remove("active"));
+  el.classList.add("active"); currentResaTab=tab; renderReservations();
+}
+
+// ══ MY LISTINGS ══
+function renderMyListings(){
+  autoRelease();
+  const mine=apartments.filter(a=>myListingIds.includes(a.id));
+  document.getElementById("listings-count").textContent=mine.length+" annonce(s) active(s)";
+  document.getElementById("stat-apts").textContent=mine.length;
+  document.getElementById("my-listings").innerHTML=mine.length?mine.map(a=>{
+    const occ=isOccupied(a.id,todayStr(),addDay(todayStr(),1));
+    return`<div class="listing-card">
       <div class="listing-thumb" style="background:${a.color}">${a.emoji}</div>
       <div class="listing-info">
         <div class="listing-title">${a.title}</div>
         <div class="listing-price">${a.price} DT / nuit</div>
-        <div class="listing-stats">👁️ ${a.resa * 12} vues · 📅 ${a.resa} réservation(s)</div>
+        <div class="listing-stats">👁️ ${a.resa*12} vues · 📅 ${a.resa} résa &nbsp;·&nbsp; <span style="color:${occ?"#A32D2D":"#3B6D11"};font-weight:600">${occ?"🔴 Occupé":"🟢 Libre"}</span></div>
       </div>
       <div class="listing-actions">
         <button class="icon-btn" onclick="toast('Modification de l\'annonce')">✏️</button>
         <button class="icon-btn del" onclick="deleteListing(${a.id})">🗑️</button>
       </div>
-    </div>`).join("") : `<div class="empty"><div class="empty-icon">🏠</div><p>Aucune annonce publiée</p></div>`;
+    </div>`;
+  }).join(""):`<div class="empty"><div class="empty-icon">🏠</div><p>Aucune annonce publiée</p></div>`;
 }
 
-function deleteListing(id) {
-  const idx = myListingIds.indexOf(id);
-  if (idx > -1) myListingIds.splice(idx, 1);
-  const aIdx = apartments.findIndex(a => a.id === id);
-  if (aIdx > -1) apartments.splice(aIdx, 1);
-  renderMyListings();
-  renderApts();
-  toast("🗑️ Annonce supprimée");
+function deleteListing(id){
+  myListingIds.splice(myListingIds.indexOf(id),1);
+  apartments.splice(apartments.findIndex(a=>a.id===id),1);
+  renderMyListings(); renderApts(); toast("🗑️ Annonce supprimée");
 }
 
-// ── Navigation ──
-function showScreen(name) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById("screen-" + name).classList.add("active");
+// ══ NAVIGATION ══
+function showScreen(n){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-"+n).classList.add("active");}
+function navigate(n){
+  showScreen(n);
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
+  const m={home:"nav-home",deposit:"nav-deposit",reservations:"nav-reservations",listings:"nav-listings",profile:"nav-profile"};
+  if(m[n])document.getElementById(m[n]).classList.add("active");
+  if(n==="home")renderApts();
+  if(n==="reservations")renderReservations();
+  if(n==="listings")renderMyListings();
 }
 
-function navigate(name) {
-  showScreen(name);
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-  const map = { home:"nav-home", deposit:"nav-deposit", reservations:"nav-reservations", listings:"nav-listings", profile:"nav-profile" };
-  if (map[name]) document.getElementById(map[name]).classList.add("active");
-  if (name === "home")         renderApts();
-  if (name === "reservations") renderReservations();
-  if (name === "listings")     renderMyListings();
+// ══ MODAL ══
+function showModal(title,body){
+  document.getElementById("modal-title").textContent=title;
+  document.getElementById("modal-body").style.whiteSpace="pre-wrap";
+  document.getElementById("modal-body").textContent=body;
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal(){document.getElementById("modal").classList.remove("show");}
+
+// ══ TOAST ══
+function toast(msg,isErr){
+  const el=document.getElementById("toast-el");
+  el.textContent=msg; el.className="toast"+(isErr?" err":"");
+  el.classList.add("show"); clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove("show"),2800);
 }
 
-// ── Toast ──
-function toast(msg) {
-  const el = document.getElementById("toast-el");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove("show"), 2600);
-}
-
-// ── Service Worker (PWA) ──
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
-}
+// ── SW ──
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 
 // ── Init ──
-renderApts();
-renderReservations();
-renderMyListings();
+autoRelease(); renderApts(); renderReservations(); renderMyListings();
 </script>
 </body>
 </html>
