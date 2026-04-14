@@ -886,7 +886,7 @@ function setStatus(s) {
     'Supprimer la réservation',
     `Supprimer ${r.prenom} ${r.nom} ?`,
     ()=>{
-      reservations = reservations.filter(x => x.id != id);
+      reservations = reservations.filter(x => String(x.id) !== String(id));
 
       saveData();
 
