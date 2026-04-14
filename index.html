@@ -551,10 +551,10 @@ function renderCalendar() {
     // Find reservations overlapping this apt in this period
     const aptResas = reservations.filter(r =>
   r.apt === aptId &&
-  r.status !== 'cancelled' &&
-  r.from < days[days.length-1] &&
-  r.to > days[0]
+  r.from <= days[days.length-1] &&
+  r.to >= days[0]
 );
+   
 
     days.forEach((d, di) => {
       const isToday = d === today;
@@ -869,14 +869,28 @@ function setStatus(s) {
 // ══════════════════════════════════════════
 // DELETE
 // ══════════════════════════════════════════
-function confirmDelete(id) {
+
+  function confirmDelete(id) {
   const r = reservations.find(x=>x.id===id);
   if (!r) return;
-  openConfirm('Supprimer la réservation', `Supprimer la réservation de ${r.prenom} ${r.nom} (${r.apt}, ${fmtFull(r.from)}→${fmtFull(r.to)}) ?`, ()=>{
-    reservations = reservations.filter(x=>x.id!==id);
-    saveData(); refreshAll(); toast('Réservation supprimée','ok');
-  });
+
+  openConfirm(
+    'Supprimer la réservation',
+    `Supprimer ${r.prenom} ${r.nom} ?`,
+    ()=>{
+      reservations = reservations.filter(x => x.id != id);
+
+      saveData();
+
+      renderCalendar();
+      renderList();
+      renderStats();
+
+      toast('Réservation supprimée','ok');
+    }
+  );
 }
+
 
 // ══════════════════════════════════════════
 // CONFIRM MODAL
