@@ -922,12 +922,21 @@ function setStatus(s) {
 // DELETE
 // ══════════════════════════════════════════
 function confirmDelete(id) {
-  const r = reservations.find(x=>x.id===id);
+  const r = reservations.find(x => String(x.id) === String(id));
   if (!r) return;
-  openConfirm('Supprimer la réservation', `Supprimer la réservation de ${r.prenom} ${r.nom} (${r.apt}, ${fmtFull(r.from)}→${fmtFull(r.to)}) ?`, ()=>{
-    reservations = reservations.filter(x=>x.id!==id);
-    saveData(); refreshAll(); toast('Réservation supprimée','ok');
-  });
+
+  openConfirm(
+    'Supprimer la réservation',
+    `Supprimer la réservation de ${r.prenom} ${r.nom} (${r.apt}, ${fmtFull(r.from)}→${fmtFull(r.to)}) ?`,
+    () => {
+      reservations = reservations.filter(x => String(x.id) !== String(id));
+
+      saveData();
+      refreshAll();
+
+      toast('Réservation supprimée','ok');
+    }
+  );
 }
 
 // ══════════════════════════════════════════
