@@ -907,7 +907,17 @@ function saveReservation() {
   const from   = document.getElementById('f-from').value;
   const to     = document.getElementById('f-to').value;
   const apt    = document.getElementById('f-apt').value;
+  const conflicts = hasConflict(apt, from, to, editingResId);
 
+if (conflicts.length > 0) {
+  toast("❌ Conflit de réservation ! Impossible d'enregistrer", "err");
+
+  document.getElementById('conflict-warning').style.display = 'block';
+  document.getElementById('conflict-warning').textContent =
+    "⚠️ Conflit détecté : réservation existante sur ces dates";
+
+  return; // 🔴 BLOQUE ENREGISTREMENT
+}
   if (!prenom||!nom) { toast('Prénom et nom requis','err'); return; }
   if (!from||!to||from>=to) { toast('Dates invalides','err'); return; }
   if (!apt) { toast('Appartement requis','err'); return; }
