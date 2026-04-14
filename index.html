@@ -1,629 +1,1061 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>LocAppart – Location d'appartements</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#1a1a2e" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="LocAppart" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    :root{--bg:#f4f4f0;--bg2:#ffffff;--bg3:#ebebeb;--text:#1a1a2e;--text2:#6b6b7a;--text3:#a0a0b0;--border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.15);--primary:#1a1a2e;--accent:#e8a045;--radius:14px;--radius-lg:18px}
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
-    #app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
-    .status-bar{background:var(--primary);height:env(safe-area-inset-top,0px);min-height:0}
-    .screen{display:none;flex-direction:column;flex:1;overflow-y:auto;padding-bottom:70px}
-    .screen.active{display:flex}
-    .screen::-webkit-scrollbar{display:none}
-    .header{background:var(--primary);padding:18px 20px 16px;color:#fff;flex-shrink:0}
-    .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
-    .header h1{font-size:20px;font-weight:600;color:#fff}
-    .header p{font-size:13px;color:rgba(255,255,255,.55)}
-    .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff;flex-shrink:0}
-    .search-wrap{padding:14px 16px 0}
-    .search-box{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;display:flex;align-items:center;padding:10px 12px;gap:8px}
-    .search-box input{border:none;background:transparent;font-size:14px;color:var(--text);flex:1;outline:none;font-family:'DM Sans',sans-serif}
-    .search-box input::placeholder{color:var(--text3)}
-    .search-btn{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif}
-    .date-filter-wrap{padding:10px 16px 0}
-    .date-filter-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
-    .date-filter-row{display:flex;gap:6px;align-items:center}
-    .date-filter-row input{flex:1;border:0.5px solid var(--border2);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--text);background:var(--bg2);font-family:'DM Sans',sans-serif;outline:none}
-    .date-filter-row span{font-size:11px;color:var(--text3)}
-    .clear-btn{background:transparent;border:0.5px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
-    .avail-pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:7px}
-    .avail-free{background:#EAF3DE;color:#3B6D11}
-    .avail-busy{background:#FCEBEB;color:#A32D2D}
-    .filters{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;flex-shrink:0}
-    .filters::-webkit-scrollbar{display:none}
-    .chip{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:6px 15px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .2s;flex-shrink:0}
-    .chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .section-lbl{padding:16px 16px 8px;font-size:12px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
-    .apt-card{background:var(--bg2);border-radius:var(--radius-lg);margin:0 16px 14px;border:0.5px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .12s}
-    .apt-card:active{transform:scale(.98)}
-    .apt-card.occupied{border-color:#F7C1C1}
-    .apt-img{height:175px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:54px}
-    .apt-badge{position:absolute;top:10px;left:10px;background:rgba(26,26,46,.82);color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:500}
-    .apt-fav{position:absolute;top:10px;right:10px;width:32px;height:32px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;border:none}
-    .occ-overlay{position:absolute;inset:0;background:rgba(163,45,45,.2);display:flex;align-items:center;justify-content:center}
-    .occ-label{background:#A32D2D;color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:20px}
-    .apt-body{padding:13px 15px 15px}
-    .apt-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px}
-    .apt-loc{font-size:12px;color:var(--text2);margin-bottom:6px}
-    .apt-row{display:flex;align-items:center;justify-content:space-between}
-    .apt-price{font-size:18px;font-weight:600;color:var(--primary)}
-    .apt-price span{font-size:12px;color:var(--text2);font-weight:400}
-    .apt-tags{display:flex;gap:6px}
-    .tag{background:var(--bg3);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--text2)}
-    .bottom-nav{position:absolute;bottom:0;left:0;right:0;height:62px;background:var(--bg2);border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 4px calc(env(safe-area-inset-bottom,0px));z-index:100}
-    .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px 10px;border-radius:10px;transition:background .15s;flex:1;border:none;background:transparent;font-family:'DM Sans',sans-serif}
-    .nav-item svg{width:22px;height:22px;stroke:var(--text3);fill:none;stroke-width:1.8;transition:stroke .15s}
-    .nav-item .nav-lbl{font-size:10px;color:var(--text3);transition:color .15s}
-    .nav-item.active svg{stroke:var(--primary)}
-    .nav-item.active .nav-lbl{color:var(--primary);font-weight:600}
-    .detail-img{min-height:230px;position:relative;display:flex;align-items:center;justify-content:center;font-size:80px;flex-shrink:0}
-    .back-btn{position:absolute;top:14px;left:14px;width:36px;height:36px;background:rgba(255,255,255,.92);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none}
-    .detail-body{padding:18px 18px 100px}
-    .detail-title{font-size:21px;font-weight:600;margin-bottom:5px}
-    .detail-loc{font-size:13px;color:var(--text2);margin-bottom:14px}
-    .detail-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:18px}
-    .detail-price{font-size:26px;font-weight:600;color:var(--primary)}
-    .detail-price-unit{font-size:14px;color:var(--text2)}
-    .amenities{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-    .amenity{background:var(--bg3);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--text2)}
-    .detail-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px}
-    .date-label{font-size:14px;font-weight:600;margin-bottom:8px}
-    .date-row{display:flex;gap:10px;margin-bottom:10px}
-    .date-input{flex:1;border:0.5px solid var(--border2);border-radius:10px;padding:11px 12px;font-size:13px;color:var(--text);background:var(--bg2);font-family:'DM Sans',sans-serif;outline:none}
-    .avail-box{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
-    .avail-box.show{display:block}
-    .avail-box.ok{background:#EAF3DE;border:0.5px solid #C0DD97;color:#3B6D11}
-    .avail-box.err{background:#FCEBEB;border:0.5px solid #F7C1C1;color:#A32D2D}
-    .apt-info-row{background:var(--bg3);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text2);margin-bottom:10px}
-    .reserve-btn{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:17px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-    .reserve-btn:disabled{background:#aaa;cursor:not-allowed}
-    .form-wrap{padding:18px 16px 80px}
-    .form-group{margin-bottom:15px}
-    .form-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:block}
-    .form-input{width:100%;border:0.5px solid var(--border2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);background:var(--bg2);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
-    .form-input:focus{border-color:var(--primary)}
-    .form-row{display:flex;gap:10px}
-    .form-row .form-group{flex:1}
-    textarea.form-input{resize:none;line-height:1.6}
-    .img-picker{border:1.5px dashed var(--border2);border-radius:12px;padding:26px;text-align:center;cursor:pointer;background:var(--bg2)}
-    .img-picker-icon{font-size:30px;margin-bottom:8px}
-    .img-picker p{font-size:13px;color:var(--text2)}
-    .submit-btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:16px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px}
-    .resa-card{background:var(--bg2);border-radius:var(--radius);margin:0 16px 12px;border:0.5px solid var(--border);padding:14px}
-    .resa-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-    .resa-thumb{width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
-    .resa-info{flex:1;min-width:0}
-    .resa-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .resa-dates{font-size:12px;color:var(--text2);margin-top:2px}
-    .resa-status{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;flex-shrink:0}
-    .s-pending{background:#FAEEDA;color:#854F0B}
-    .s-confirmed{background:#EAF3DE;color:#3B6D11}
-    .s-cancelled{background:#FCEBEB;color:#A32D2D}
-    .s-released{background:#E6F1FB;color:#185FA5}
-    .resa-total{font-size:13px;color:var(--text2);margin-bottom:10px}
-    .resa-total strong{color:var(--text)}
-    .resa-footer{display:flex;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:0.5px solid var(--border)}
-    .resa-btn{flex:1;border:0.5px solid var(--border2);border-radius:8px;padding:9px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background:transparent;color:var(--text);transition:background .15s;min-width:70px}
-    .resa-btn.confirm{background:var(--primary);color:#fff;border-color:var(--primary)}
-    .resa-btn.danger{color:#A32D2D;border-color:#F7C1C1}
-    .resa-btn.release{color:#185FA5;border-color:#B5D4F4}
-    .listing-card{background:var(--bg2);border-radius:var(--radius);margin:0 16px 12px;border:0.5px solid var(--border);display:flex;gap:12px;padding:13px;align-items:center}
-    .listing-thumb{width:66px;height:66px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
-    .listing-info{flex:1;min-width:0}
-    .listing-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .listing-price{font-size:13px;color:var(--text2);margin-top:2px}
-    .listing-stats{font-size:11px;color:var(--text3);margin-top:3px}
-    .listing-actions{display:flex;flex-direction:column;gap:6px}
-    .icon-btn{width:34px;height:34px;border:0.5px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px}
-    .icon-btn.del{border-color:#F7C1C1;background:#FCEBEB}
-    .profile-wrap{padding:20px 16px 80px}
-    .profile-header{display:flex;align-items:center;gap:16px;margin-bottom:24px}
-    .profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:600;flex-shrink:0}
-    .profile-name{font-size:19px;font-weight:600}
-    .profile-email{font-size:13px;color:var(--text2);margin-top:2px}
-    .stats-row{display:flex;gap:10px;margin-bottom:20px}
-    .stat-card{flex:1;background:var(--bg2);border-radius:var(--radius);padding:13px;text-align:center;border:0.5px solid var(--border)}
-    .stat-num{font-size:24px;font-weight:600;color:var(--primary)}
-    .stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
-    .menu-list{background:var(--bg2);border-radius:var(--radius);border:0.5px solid var(--border);overflow:hidden}
-    .menu-item{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .15s}
-    .menu-item:last-child{border-bottom:none}
-    .menu-item:active{background:var(--bg3)}
-    .menu-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-    .menu-text{flex:1;font-size:14px}
-    .menu-chev{font-size:18px;color:var(--text3)}
-    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--primary);color:#fff;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:500;text-align:center;opacity:0;transition:all .3s;z-index:999;white-space:pre-wrap;pointer-events:none;max-width:340px;line-height:1.4}
-    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-    .toast.err{background:#A32D2D}
-    .empty{text-align:center;padding:40px 20px;color:var(--text3)}
-    .empty-icon{font-size:40px;margin-bottom:10px}
-    .empty p{font-size:14px}
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
-    .modal-overlay.show{opacity:1;pointer-events:all}
-    .modal{background:var(--bg2);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;transform:translateY(100%);transition:transform .3s}
-    .modal-overlay.show .modal{transform:translateY(0)}
-    .modal-title{font-size:17px;font-weight:600;margin-bottom:10px}
-    .modal-body{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px}
-    .modal-btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>GestAppart – Gestion Réservations</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#1e293b"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<style>
+:root{
+  --bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--bg4:#475569;
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --border:#334155;--border2:#475569;
+  --primary:#3b82f6;--primary-d:#2563eb;
+  --radius:10px;--radius-lg:14px;
+  --green:#22c55e;--yellow:#eab308;--red:#ef4444;--gray:#6b7280;
+  --green-bg:rgba(34,197,94,0.18);--yellow-bg:rgba(234,179,8,0.18);
+  --red-bg:rgba(239,68,68,0.18);--gray-bg:rgba(107,114,128,0.18);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;max-width:100vw;overflow:hidden}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50}
+.topbar-title{font-size:17px;font-weight:700;color:var(--text)}
+.topbar-actions{display:flex;gap:8px}
+.icon-btn{background:var(--bg3);border:none;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:background .15s}
+.icon-btn:active{background:var(--bg4)}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:11px 0;text-align:center;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow:hidden;flex-direction:column}
+.screen.active{display:flex}
+
+/* ═══════════════════════════════
+   CALENDAR SCREEN
+═══════════════════════════════ */
+.cal-header{padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.cal-nav{display:flex;align-items:center;gap:10px}
+.cal-nav button{background:var(--bg3);border:none;border-radius:6px;width:30px;height:30px;color:var(--text);cursor:pointer;font-size:14px}
+.cal-week-label{font-size:13px;font-weight:600;color:var(--text);min-width:160px;text-align:center}
+.cal-view-btns{display:flex;gap:4px}
+.cal-view-btn{background:var(--bg3);border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit}
+.cal-view-btn.active{background:var(--primary);color:#fff}
+
+.cal-wrap{flex:1;overflow:auto;position:relative}
+.cal-wrap::-webkit-scrollbar{height:4px;width:4px}
+.cal-wrap::-webkit-scrollbar-track{background:var(--bg)}
+.cal-wrap::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+
+.cal-grid{display:grid;min-width:max-content}
+/* header row */
+.cal-head{display:contents}
+.cal-corner{background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 10px;font-size:11px;color:var(--text3);position:sticky;left:0;z-index:20;min-width:72px}
+.cal-day-head{background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 4px;text-align:center;font-size:10px;color:var(--text2);min-width:44px;position:sticky;top:0;z-index:10}
+.cal-day-head.today{background:var(--primary-d)}
+.cal-day-head .day-num{font-size:14px;font-weight:700;color:var(--text)}
+.cal-day-head.today .day-num{color:#fff}
+.cal-apt-label{background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;font-size:11px;font-weight:600;color:var(--text);position:sticky;left:0;z-index:15;min-width:72px;display:flex;flex-direction:column;gap:2px}
+.cal-apt-label span{font-size:10px;color:var(--text3);font-weight:400}
+.cal-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-height:44px;min-width:44px;position:relative;background:var(--bg);cursor:pointer;transition:background .1s}
+.cal-cell:hover{background:var(--bg3)}
+.cal-cell.today-col{background:rgba(59,130,246,0.05)}
+
+/* Reservation blocks */
+.res-block{position:absolute;top:4px;bottom:4px;border-radius:5px;display:flex;align-items:center;padding:0 6px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;z-index:5;transition:filter .15s;left:2px;right:2px}
+.res-block:hover{filter:brightness(1.15)}
+.res-block.status-paid{background:var(--green-bg);color:var(--green);border:1px solid var(--green)}
+.res-block.status-advance{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow)}
+.res-block.status-unpaid{background:var(--red-bg);color:var(--red);border:1px solid var(--red)}
+.res-block.status-cancelled{background:var(--gray-bg);color:var(--gray);border:1px solid var(--gray);text-decoration:line-through}
+/* multi-day span blocks */
+.res-span{position:absolute;top:4px;bottom:4px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;cursor:pointer;z-index:5}
+.res-span:hover{filter:brightness(1.2)}
+
+/* Legend */
+.legend{display:flex;gap:10px;padding:8px 16px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:10px;height:10px;border-radius:3px}
+
+/* ═══════════════════════════════
+   LIST SCREEN
+═══════════════════════════════ */
+.list-toolbar{padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.search-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none}
+.search-input::placeholder{color:var(--text3)}
+.search-input:focus{border-color:var(--primary)}
+.filter-select{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text);font-family:inherit;outline:none;max-width:90px}
+
+.list-scroll{flex:1;overflow-y:auto;padding:8px 16px 80px}
+.list-scroll::-webkit-scrollbar{width:3px}
+.list-scroll::-webkit-scrollbar-thumb{background:var(--bg3)}
+
+.res-card{background:var(--bg2);border-radius:var(--radius-lg);margin-bottom:10px;border:1px solid var(--border);overflow:hidden}
+.res-card-header{display:flex;align-items:center;gap:10px;padding:12px 14px 8px}
+.res-card-color{width:6px;align-self:stretch;border-radius:3px;flex-shrink:0}
+.res-card-info{flex:1;min-width:0}
+.res-card-name{font-size:14px;font-weight:700;color:var(--text)}
+.res-card-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.res-card-apt{font-size:12px;font-weight:600;color:var(--primary);background:rgba(59,130,246,.15);padding:3px 8px;border-radius:20px;white-space:nowrap}
+.res-card-body{padding:0 14px 10px;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.res-card-row{font-size:11px;color:var(--text2)}
+.res-card-row strong{color:var(--text);font-weight:600}
+.res-card-footer{display:flex;gap:6px;padding:8px 14px 12px;border-top:1px solid var(--border)}
+.action-btn{flex:1;border:none;border-radius:7px;padding:8px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:filter .15s}
+.action-btn:active{filter:brightness(.85)}
+.btn-edit{background:rgba(59,130,246,.15);color:var(--primary)}
+.btn-status{background:var(--bg3);color:var(--text2)}
+.btn-del{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* ═══════════════════════════════
+   STATS SCREEN
+═══════════════════════════════ */
+.stats-scroll{flex:1;overflow-y:auto;padding:16px}
+.stats-scroll::-webkit-scrollbar{width:3px}
+.stats-scroll::-webkit-scrollbar-thumb{background:var(--bg3)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg2);border-radius:var(--radius-lg);padding:14px;border:1px solid var(--border)}
+.stat-num{font-size:26px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:3px}
+.stat-section-title{font-size:13px;font-weight:600;color:var(--text2);margin:16px 0 8px}
+.apt-stat-row{background:var(--bg2);border-radius:var(--radius);padding:10px 14px;margin-bottom:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.apt-stat-name{font-size:13px;font-weight:600;color:var(--text)}
+.apt-stat-details{font-size:11px;color:var(--text2);margin-top:2px}
+.apt-stat-amount{font-size:14px;font-weight:700;color:var(--green)}
+
+/* ═══════════════════════════════
+   MODAL / FORM
+═══════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .3s;padding-bottom:env(safe-area-inset-bottom,16px)}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal::-webkit-scrollbar{display:none}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700;color:var(--text)}
+.modal-close{background:var(--bg3);border:none;border-radius:8px;width:32px;height:32px;color:var(--text2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.form-body{padding:14px 18px 8px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.form-control{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:11px 13px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.form-control:focus{border-color:var(--primary)}
+.form-control option{background:var(--bg2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-info{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--primary);margin-bottom:14px}
+.form-footer{padding:10px 18px 16px;display:flex;gap:10px}
+.btn-cancel{flex:1;background:var(--bg3);border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit}
+.btn-save{flex:2;background:var(--primary);border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit}
+.btn-save:active{background:var(--primary-d)}
+
+/* status change modal */
+.status-options{padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.status-opt{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;color:var(--text);transition:background .15s}
+.status-opt:active{background:var(--bg4)}
+.status-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+
+/* confirm modal */
+.confirm-body{padding:18px}
+.confirm-msg{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:18px}
+.confirm-btns{display:flex;gap:10px}
+.btn-confirm-no{flex:1;background:var(--bg3);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit}
+.btn-confirm-yes{flex:1;background:var(--red);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit}
+
+/* settings modal */
+.settings-body{padding:14px 18px 20px}
+.settings-section{margin-bottom:20px}
+.settings-section-title{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.settings-btn{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:13px 16px;font-size:14px;color:var(--text);cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.settings-btn:active{background:var(--bg4)}
+.settings-btn-icon{font-size:18px}
+.apt-edit-row{background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.apt-edit-name{font-size:13px;font-weight:600;color:var(--text);min-width:48px}
+.apt-edit-input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none}
+.apt-edit-input:focus{border-color:var(--primary)}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:var(--primary);border:none;border-radius:50%;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(59,130,246,.5);z-index:100;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.fab:active{transform:scale(.92)}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+
+/* status badge */
+.status-badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-paid{background:var(--green-bg);color:var(--green)}
+.badge-advance{background:var(--yellow-bg);color:var(--yellow)}
+.badge-unpaid{background:var(--red-bg);color:var(--red)}
+.badge-cancelled{background:var(--gray-bg);color:var(--gray)}
+
+/* empty */
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+.empty p{font-size:14px}
+</style>
 </head>
 <body>
 <div id="app">
-  <div class="status-bar"></div>
 
-  <!-- HOME -->
-  <div class="screen active" id="screen-home">
-    <div class="header">
-      <div class="header-top">
-        <div><h1>Bonjour, Ahmed 👋</h1><p>Trouvez votre appartement idéal</p></div>
-        <div class="avatar">AH</div>
-      </div>
-    </div>
-    <div class="search-wrap">
-      <div class="search-box">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a0a0b0" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="search-input" placeholder="Rechercher une ville, quartier…" />
-        <button class="search-btn" onclick="doSearch()">Chercher</button>
-      </div>
-    </div>
-    <div class="date-filter-wrap">
-      <div class="date-filter-label">Filtrer par disponibilité</div>
-      <div class="date-filter-row">
-        <input type="date" id="filter-from" onchange="renderApts()" />
-        <span>→</span>
-        <input type="date" id="filter-to" onchange="renderApts()" />
-        <button class="clear-btn" onclick="clearDateFilter()">✕ Effacer</button>
-      </div>
-    </div>
-    <div class="filters" id="home-filters">
-      <div class="chip active" onclick="setFilter(this,'all')">Tous</div>
-      <div class="chip" onclick="setFilter(this,'studio')">Studio</div>
-      <div class="chip" onclick="setFilter(this,'f2')">F2</div>
-      <div class="chip" onclick="setFilter(this,'f3')">F3</div>
-      <div class="chip" onclick="setFilter(this,'luxe')">Luxe</div>
-    </div>
-    <div class="section-lbl" id="home-count">5 annonces disponibles</div>
-    <div id="apt-list"></div>
-  </div>
-
-  <!-- DETAIL -->
-  <div class="screen" id="screen-detail"><div id="detail-content"></div></div>
-
-  <!-- DEPOSIT -->
-  <div class="screen" id="screen-deposit">
-    <div class="header">
-      <div class="header-top"><h1>Déposer une annonce</h1></div>
-      <p>Publiez votre appartement en quelques étapes</p>
-    </div>
-    <div class="form-wrap">
-      <div class="form-group"><label class="form-label">Titre de l'annonce</label><input class="form-input" id="dep-title" placeholder="Ex: Appartement moderne vue mer" /></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="dep-city" placeholder="Tunis" /></div>
-        <div class="form-group"><label class="form-label">Quartier</label><input class="form-input" id="dep-quartier" placeholder="Lac 2" /></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Prix / nuit (DT)</label><input class="form-input" type="number" id="dep-price" placeholder="150" /></div>
-        <div class="form-group"><label class="form-label">Type</label><select class="form-input" id="dep-type"><option>Studio</option><option>F2</option><option>F3</option><option>F4+</option></select></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Chambres</label><input class="form-input" type="number" id="dep-rooms" placeholder="2" /></div>
-        <div class="form-group"><label class="form-label">Surface (m²)</label><input class="form-input" type="number" id="dep-surface" placeholder="75" /></div>
-      </div>
-      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="dep-desc" rows="3" placeholder="Décrivez votre appartement…"></textarea></div>
-      <div class="form-group">
-        <label class="form-label">Photos</label>
-        <div class="img-picker" onclick="toast('Sélection de photos activée')"><div class="img-picker-icon">📷</div><p>Appuyez pour ajouter des photos</p></div>
-      </div>
-      <button class="submit-btn" onclick="submitListing()">Publier l'annonce</button>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title">🏠 GestAppart</div>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="openSearch()" title="Recherche">🔍</button>
+      <button class="icon-btn" onclick="openSettings()" title="Paramètres">⚙️</button>
     </div>
   </div>
 
-  <!-- RESERVATIONS -->
-  <div class="screen" id="screen-reservations">
-    <div class="header">
-      <div class="header-top"><h1>Mes réservations</h1></div>
-      <p>Gérez vos demandes de location</p>
-    </div>
-    <div class="filters">
-      <div class="chip active" onclick="setResaTab('all',this)">Toutes</div>
-      <div class="chip" onclick="setResaTab('pending',this)">En attente</div>
-      <div class="chip" onclick="setResaTab('confirmed',this)">Confirmées</div>
-      <div class="chip" onclick="setResaTab('released',this)">Libérées</div>
-    </div>
-    <div class="section-lbl" id="resa-count">3 réservations</div>
-    <div id="resa-list"></div>
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-cal" onclick="switchTab('cal')">📅 Calendrier</div>
+    <div class="tab" id="tab-list" onclick="switchTab('list')">📋 Réservations</div>
+    <div class="tab" id="tab-stats" onclick="switchTab('stats')">📊 Statistiques</div>
   </div>
 
-  <!-- MY LISTINGS -->
-  <div class="screen" id="screen-listings">
-    <div class="header">
-      <div class="header-top"><h1>Mes annonces</h1></div>
-      <p>Gérez vos appartements publiés</p>
+  <!-- ═══ CALENDAR SCREEN ═══ -->
+  <div class="screen active" id="screen-cal">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button onclick="navWeek(-1)">‹</button>
+        <div class="cal-week-label" id="week-label"></div>
+        <button onclick="navWeek(1)">›</button>
+        <button onclick="goToday()" style="font-size:10px;padding:0 8px;width:auto">Auj.</button>
+      </div>
+      <div class="cal-view-btns">
+        <button class="cal-view-btn active" id="btn-7" onclick="setDays(7)">7j</button>
+        <button class="cal-view-btn" id="btn-14" onclick="setDays(14)">14j</button>
+        <button class="cal-view-btn" id="btn-30" onclick="setDays(30)">30j</button>
+      </div>
     </div>
-    <div class="section-lbl" id="listings-count">3 annonces actives</div>
-    <div id="my-listings"></div>
-  </div>
-
-  <!-- PROFILE -->
-  <div class="screen" id="screen-profile">
-    <div class="profile-wrap">
-      <div class="profile-header">
-        <div class="profile-avatar">AH</div>
-        <div><div class="profile-name">Ahmed Hamdi</div><div class="profile-email">ahmed.hamdi@email.com</div></div>
-      </div>
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" id="stat-apts">3</div><div class="stat-lbl">Annonces</div></div>
-        <div class="stat-card"><div class="stat-num" id="stat-resas">3</div><div class="stat-lbl">Réservations</div></div>
-        <div class="stat-card"><div class="stat-num">4.8</div><div class="stat-lbl">Note ★</div></div>
-      </div>
-      <div class="menu-list">
-        <div class="menu-item" onclick="toast('Modification du profil')"><div class="menu-icon" style="background:#E6F1FB">👤</div><span class="menu-text">Modifier le profil</span><span class="menu-chev">›</span></div>
-        <div class="menu-item" onclick="toast('Notifications')"><div class="menu-icon" style="background:#EAF3DE">🔔</div><span class="menu-text">Notifications</span><span class="menu-chev">›</span></div>
-        <div class="menu-item" onclick="toast('Paiements')"><div class="menu-icon" style="background:#FAEEDA">💳</div><span class="menu-text">Paiements</span><span class="menu-chev">›</span></div>
-        <div class="menu-item" onclick="toast('Centre d\'aide')"><div class="menu-icon" style="background:#FBEAF0">❓</div><span class="menu-text">Centre d'aide</span><span class="menu-chev">›</span></div>
-        <div class="menu-item" onclick="toast('Déconnexion')"><div class="menu-icon" style="background:#FCEBEB">🚪</div><span class="menu-text" style="color:#A32D2D">Déconnexion</span><span class="menu-chev" style="color:#A32D2D">›</span></div>
-      </div>
+    <div class="cal-wrap" id="cal-wrap">
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Payé</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Avance</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Non payé</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--gray)"></div>Annulé</div>
     </div>
   </div>
 
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" id="nav-home" onclick="navigate('home')">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span class="nav-lbl">Accueil</span>
-    </button>
-    <button class="nav-item" id="nav-deposit" onclick="navigate('deposit')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      <span class="nav-lbl">Déposer</span>
-    </button>
-    <button class="nav-item" id="nav-reservations" onclick="navigate('reservations')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <span class="nav-lbl">Réservations</span>
-    </button>
-    <button class="nav-item" id="nav-listings" onclick="navigate('listings')">
-      <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      <span class="nav-lbl">Mes biens</span>
-    </button>
-    <button class="nav-item" id="nav-profile" onclick="navigate('profile')">
-      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span class="nav-lbl">Profil</span>
-    </button>
-  </nav>
+  <!-- ═══ LIST SCREEN ═══ -->
+  <div class="screen" id="screen-list">
+    <div class="list-toolbar">
+      <input class="search-input" id="list-search" placeholder="Rechercher client…" oninput="renderList()"/>
+      <select class="filter-select" id="list-filter-apt" onchange="renderList()">
+        <option value="">Tous</option>
+      </select>
+      <select class="filter-select" id="list-filter-status" onchange="renderList()">
+        <option value="">Statut</option>
+        <option value="unpaid">Non payé</option>
+        <option value="advance">Avance</option>
+        <option value="paid">Payé</option>
+        <option value="cancelled">Annulé</option>
+      </select>
+    </div>
+    <div class="list-scroll" id="list-scroll"></div>
+  </div>
 
-  <!-- Modal générique -->
-  <div class="modal-overlay" id="modal">
+  <!-- ═══ STATS SCREEN ═══ -->
+  <div class="screen" id="screen-stats">
+    <div class="stats-scroll" id="stats-scroll"></div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="openForm()" id="fab">＋</button>
+
+  <!-- ═══ FORM MODAL ═══ -->
+  <div class="modal-overlay" id="modal-form">
     <div class="modal">
-      <div class="modal-title" id="modal-title">Information</div>
-      <div class="modal-body" id="modal-body"></div>
-      <button class="modal-btn" onclick="closeModal()">Fermer</button>
+      <div class="modal-header">
+        <div class="modal-title" id="form-title">Nouvelle réservation</div>
+        <button class="modal-close" onclick="closeForm()">×</button>
+      </div>
+      <div class="form-body">
+        <input type="hidden" id="f-id"/>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prénom</label>
+            <input class="form-control" id="f-prenom" placeholder="Prénom"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom</label>
+            <input class="form-control" id="f-nom" placeholder="Nom"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input class="form-control" id="f-tel" type="tel" placeholder="+216 XX XXX XXX"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Appartement</label>
+          <select class="form-control" id="f-apt" onchange="calcTotal()"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date arrivée</label>
+            <input class="form-control" id="f-from" type="date" onchange="calcTotal()"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date départ</label>
+            <input class="form-control" id="f-to" type="date" onchange="calcTotal()"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nb personnes</label>
+            <input class="form-control" id="f-persons" type="number" min="1" value="2"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Statut paiement</label>
+            <select class="form-control" id="f-status">
+              <option value="unpaid">Non payé</option>
+              <option value="advance">Avance versée</option>
+              <option value="paid">Payé totalement</option>
+              <option value="cancelled">Annulé</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-info" id="f-calc">Sélectionnez un appartement et des dates</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Montant total (DT)</label>
+            <input class="form-control" id="f-total" type="number" min="0" placeholder="0"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Montant payé (DT)</label>
+            <input class="form-control" id="f-paid" type="number" min="0" placeholder="0"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (optionnel)</label>
+          <input class="form-control" id="f-notes" placeholder="Remarques…"/>
+        </div>
+        <div id="conflict-warning" style="display:none;background:rgba(239,68,68,.12);border:1px solid var(--red);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--red);margin-bottom:14px"></div>
+      </div>
+      <div class="form-footer">
+        <button class="btn-cancel" onclick="closeForm()">Annuler</button>
+        <button class="btn-save" onclick="saveReservation()">💾 Enregistrer</button>
+      </div>
     </div>
   </div>
 
-  <div class="toast" id="toast-el"></div>
+  <!-- STATUS CHANGE MODAL -->
+  <div class="modal-overlay" id="modal-status">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Changer le statut</div>
+        <button class="modal-close" onclick="closeStatusModal()">×</button>
+      </div>
+      <div class="status-options">
+        <div class="status-opt" onclick="setStatus('unpaid')"><div class="status-dot" style="background:var(--red)"></div>Non payé</div>
+        <div class="status-opt" onclick="setStatus('advance')"><div class="status-dot" style="background:var(--yellow)"></div>Avance versée</div>
+        <div class="status-opt" onclick="setStatus('paid')"><div class="status-dot" style="background:var(--green)"></div>Payé totalement</div>
+        <div class="status-opt" onclick="setStatus('cancelled')"><div class="status-dot" style="background:var(--gray)"></div>Annulé</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="confirm-title">Confirmer</div>
+        <button class="modal-close" onclick="closeConfirm()">×</button>
+      </div>
+      <div class="confirm-body">
+        <div class="confirm-msg" id="confirm-msg"></div>
+        <div class="confirm-btns">
+          <button class="btn-confirm-no" onclick="closeConfirm()">Annuler</button>
+          <button class="btn-confirm-yes" id="confirm-yes-btn">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Paramètres</div>
+        <button class="modal-close" onclick="closeSettings()">×</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-section">
+          <div class="settings-section-title">Prix des appartements</div>
+          <div id="apt-price-list"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Données</div>
+          <button class="settings-btn" onclick="exportJSON()"><span class="settings-btn-icon">📤</span>Exporter les données (JSON)</button>
+          <button class="settings-btn" onclick="triggerImport()"><span class="settings-btn-icon">📥</span>Importer des données (JSON)</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)"/>
+          <button class="settings-btn" onclick="confirmClearAll()"><span class="settings-btn-icon" style="color:var(--red)">🗑️</span><span style="color:var(--red)">Effacer toutes les données</span></button>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">À propos</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6">GestAppart v1.0 — Application offline PWA<br>Données stockées localement sur cet appareil.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH MODAL -->
+  <div class="modal-overlay" id="modal-search">
+    <div class="modal" style="border-radius:20px 20px 0 0">
+      <div class="modal-header">
+        <div class="modal-title">🔍 Recherche client</div>
+        <button class="modal-close" onclick="closeSearch()">×</button>
+      </div>
+      <div style="padding:14px 18px">
+        <input class="form-control" id="search-global" placeholder="Nom, prénom ou téléphone…" oninput="renderSearchResults()" autofocus/>
+      </div>
+      <div id="search-results" style="max-height:50vh;overflow-y:auto;padding:0 18px 20px"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
 </div>
 
 <script>
-// ══ DATA ══
-const apartments = [
-  {id:1,title:"Studio moderne Lac 2",      loc:"Tunis, Lac 2",              price:120,type:"Studio",rooms:1,surface:42, emoji:"🏙️",color:"#B5D4F4",desc:"Studio entièrement équipé, climatisé, proche du métro. Vue panoramique sur le lac.",           amenities:["📶 WiFi","❄️ Clim","🅿️ Parking","🏊 Piscine"],  badge:"Nouveau",  resa:2},
-  {id:2,title:"Appartement F3 Marsa Plage",loc:"La Marsa, Front de mer",    price:280,type:"F3",    rooms:3,surface:95, emoji:"🌊",color:"#9FE1CB",desc:"Magnifique F3 avec terrasse vue mer. Idéal pour familles.",                                      amenities:["📶 WiFi","🌅 Terrasse","🍳 Cuisine","🚗 Garage"], badge:"Top rated",resa:5},
-  {id:3,title:"Duplex luxueux Ennasr",     loc:"Ariana, Ennasr 2",          price:450,type:"F4+",  rooms:4,surface:160,emoji:"🏛️",color:"#FAC775",desc:"Somptueux duplex meublé avec jacuzzi et gym privé.",                                              amenities:["📶 WiFi","🏋️ Gym","🛁 Jacuzzi","🔒 Sécurité"],  badge:"Luxe",     resa:1},
-  {id:4,title:"Cosy F2 centre-ville",      loc:"Tunis, Centre-ville",       price:95, type:"F2",   rooms:2,surface:58, emoji:"🏘️",color:"#F5C4B3",desc:"Appartement chaleureux au cœur de Tunis, proche du métro.",                                       amenities:["📶 WiFi","❄️ Clim","🚇 Métro","🛒 Commerces"],   badge:null,       resa:3},
-  {id:5,title:"Villa familiale Hammamet",  loc:"Hammamet, Zone touristique",price:380,type:"F4+",  rooms:5,surface:200,emoji:"🏖️",color:"#C0DD97",desc:"Grande villa avec jardin et piscine privée, idéale pour les vacances en famille.",                  amenities:["🏊 Piscine","🌿 Jardin","🚗 2 Parkings","🔥 BBQ"],badge:"Populaire",resa:4},
-];
-const myListingIds = [1,2,3];
-// status: pending | confirmed | cancelled | released
-const reservations = [
-  {id:1,aptId:1,from:"2025-04-15",to:"2025-04-18",nights:3,status:"pending",  guest:"Sara Ben Ali",    total:360},
-  {id:2,aptId:2,from:"2025-04-20",to:"2025-04-25",nights:5,status:"confirmed",guest:"Mohamed Trabelsi",total:1400},
-  {id:3,aptId:3,from:"2025-05-01",to:"2025-05-03",nights:2,status:"cancelled",guest:"Leila Gharbi",    total:900},
-];
-let currentFilter="all", currentResaTab="all";
+// ══════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════
+const APT_IDS = ['APT1','APT2','APT3','APT4','APT5','APT6','APT7','APT8','APTA','APTB','APTC','APTD','APTE','APTF','APTG'];
 
-// ══ HELPERS ══
-const todayStr=()=>new Date().toISOString().slice(0,10);
-const addDay=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
-const fmtDate=s=>{if(!s)return"";const[y,m,d]=s.split("-");return`${d}/${m}/${y}`};
+const STATUS_COLOR = { paid:'#22c55e', advance:'#eab308', unpaid:'#ef4444', cancelled:'#6b7280' };
+const STATUS_CLASS = { paid:'badge-paid', advance:'badge-advance', unpaid:'badge-unpaid', cancelled:'badge-cancelled' };
+const STATUS_LABEL = { paid:'Payé', advance:'Avance', unpaid:'Non payé', cancelled:'Annulé' };
+const STATUS_CSS_CLASS = { paid:'status-paid', advance:'status-advance', unpaid:'status-unpaid', cancelled:'status-cancelled' };
 
-// Overlap check: returns true if [f1,t1) overlaps [f2,t2)
-const overlaps=(f1,t1,f2,t2)=>f1<t2&&t1>f2;
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let reservations = [];
+let aptConfig = {};  // { APT1: { price: 100, capacity: 4 }, ... }
+let calStartDate = new Date();
+let calDays = 7;
+let currentTab = 'cal';
+let editingResId = null;
+let statusTargetId = null;
+let confirmCallback = null;
 
-// Returns active (pending|confirmed) reservations that conflict with [from,to] for aptId
-function getConflicts(aptId,from,to){
-  return reservations.filter(r=>
-    r.aptId===aptId&&
-    (r.status==="pending"||r.status==="confirmed")&&
-    overlaps(from,to,r.from,r.to)
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+function saveData() {
+  try {
+    localStorage.setItem('gestappart_reservations', JSON.stringify(reservations));
+    localStorage.setItem('gestappart_apts', JSON.stringify(aptConfig));
+  } catch(e) { toast('Erreur sauvegarde!', 'err'); }
+}
+
+function loadData() {
+  try {
+    const r = localStorage.getItem('gestappart_reservations');
+    const a = localStorage.getItem('gestappart_apts');
+    if (r) reservations = JSON.parse(r);
+    if (a) aptConfig = JSON.parse(a);
+  } catch(e) { reservations = []; aptConfig = {}; }
+  // Ensure all apts have config
+  APT_IDS.forEach(id => {
+    if (!aptConfig[id]) aptConfig[id] = { price: 100, capacity: '' };
+  });
+}
+
+// ══════════════════════════════════════════
+// DATE HELPERS
+// ══════════════════════════════════════════
+const toISO = d => d.toISOString().slice(0,10);
+const parseDate = s => { const [y,m,d]=s.split('-'); return new Date(+y,+m-1,+d); };
+const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
+const diffDays = (a,b) => Math.round((parseDate(b)-parseDate(a))/86400000);
+const fmtShort = s => { if(!s)return''; const[y,m,d]=s.split('-'); return `${d}/${m}`; };
+const fmtFull  = s => { if(!s)return''; const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
+const DAY_NAMES = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTH_NAMES = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+function mondayOf(d) {
+  const r = new Date(d);
+  const day = r.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  r.setDate(r.getDate() + diff);
+  return r;
+}
+
+// ══════════════════════════════════════════
+// CONFLICT CHECK
+// ══════════════════════════════════════════
+function hasConflict(aptId, from, to, excludeId) {
+  return reservations.filter(r =>
+    r.id !== excludeId &&
+    r.apt === aptId &&
+    r.status !== 'cancelled' &&
+    r.from < to && r.to > from
   );
 }
-function isOccupied(aptId,from,to){return getConflicts(aptId,from,to).length>0}
 
-// Auto-release confirmed reservations whose end date has passed
-function autoRelease(){
-  const today=todayStr();
-  reservations.forEach(r=>{if(r.status==="confirmed"&&r.to<=today)r.status="released";});
-}
+// ══════════════════════════════════════════
+// CALENDAR RENDER
+// ══════════════════════════════════════════
+function renderCalendar() {
+  const start = toISO(calStartDate);
+  const days = [];
+  for (let i = 0; i < calDays; i++) days.push(toISO(addDays(calStartDate, i)));
 
-// ══ RENDER APARTMENTS ══
-function renderApts(){
-  autoRelease();
-  const q=(document.getElementById("search-input").value||"").toLowerCase();
-  const fd=document.getElementById("filter-from").value;
-  const td=document.getElementById("filter-to").value;
-  const hasDate=fd&&td&&fd<td;
+  // Update week label
+  const end = days[days.length-1];
+  document.getElementById('week-label').textContent =
+    `${fmtShort(start)} – ${fmtShort(end)} ${calStartDate.getFullYear()}`;
 
-  let list=[...apartments];
-  if(q)list=list.filter(a=>a.title.toLowerCase().includes(q)||a.loc.toLowerCase().includes(q));
-  if(currentFilter!=="all"){
-    if(currentFilter==="luxe")list=list.filter(a=>a.price>350);
-    else list=list.filter(a=>a.type.toLowerCase()===currentFilter);
-  }
+  const today = toISO(new Date());
+  const grid = document.getElementById('cal-grid');
 
-  // Annotate availability
-  list=list.map(a=>({...a,busy:hasDate?isOccupied(a.id,fd,td):false,hasDate}));
-  if(hasDate)list.sort((a,b)=>a.busy-b.busy); // free first
+  // Set CSS grid columns: apt-label + day columns
+  grid.style.gridTemplateColumns = `72px repeat(${calDays}, minmax(44px,1fr))`;
 
-  const freeCount=hasDate?list.filter(a=>!a.busy).length:list.length;
-  document.getElementById("home-count").textContent=hasDate
-    ?`🟢 ${freeCount} libre(s)  ·  🔴 ${list.length-freeCount} occupé(s)`
-    :`${list.length} annonce(s) disponible(s)`;
+  let html = '';
 
-  document.getElementById("apt-list").innerHTML=list.length
-    ?list.map(aptCardHtml).join("")
-    :`<div class="empty"><div class="empty-icon">🔍</div><p>Aucune annonce trouvée</p></div>`;
-}
+  // Header row
+  html += `<div class="cal-corner">${MONTH_NAMES[calStartDate.getMonth()]}</div>`;
+  days.forEach(d => {
+    const dt = parseDate(d);
+    const isToday = d === today;
+    html += `<div class="cal-day-head${isToday?' today':''}">
+      <div>${DAY_NAMES[dt.getDay()]}</div>
+      <div class="day-num">${dt.getDate()}</div>
+    </div>`;
+  });
 
-function aptCardHtml(a){
-  const pill=a.hasDate?`<div class="avail-pill ${a.busy?'avail-busy':'avail-free'}">${a.busy?'🔴 Occupé':'🟢 Libre'}</div>`:"";
-  const overlay=a.busy?`<div class="occ-overlay"><div class="occ-label">Occupé</div></div>`:"";
-  return`<div class="apt-card${a.busy?' occupied':''}" onclick="showDetail(${a.id})">
-    <div class="apt-img" style="background:${a.color}">${a.emoji}
-      ${a.badge?`<div class="apt-badge">${a.badge}</div>`:""}
-      <button class="apt-fav" onclick="event.stopPropagation();toast('Ajouté aux favoris ❤️')">♡</button>
-      ${overlay}
-    </div>
-    <div class="apt-body">
-      ${pill}
-      <div class="apt-title">${a.title}</div>
-      <div class="apt-loc">📍 ${a.loc}</div>
-      <div class="apt-row">
-        <div class="apt-price">${a.price} DT <span>/ nuit</span></div>
-        <div class="apt-tags"><div class="tag">🛏️ ${a.rooms} ch.</div><div class="tag">📐 ${a.surface}m²</div></div>
-      </div>
-    </div>
-  </div>`;
-}
+  // Rows per apartment
+  APT_IDS.forEach(aptId => {
+    const cfg = aptConfig[aptId] || {};
+    html += `<div class="cal-apt-label">${aptId}<span>${cfg.price?cfg.price+' DT':''}</span></div>`;
 
-function setFilter(el,f){
-  document.querySelectorAll("#home-filters .chip").forEach(c=>c.classList.remove("active"));
-  el.classList.add("active"); currentFilter=f; renderApts();
-}
-function doSearch(){renderApts();}
-function clearDateFilter(){
-  document.getElementById("filter-from").value="";
-  document.getElementById("filter-to").value="";
-  renderApts();
-}
+    // For each day cell, check reservations
+    // We'll build a map of day -> reservation
+    const dayMap = {};
+    days.forEach(d => { dayMap[d] = null; });
 
-// ══ DETAIL ══
-function showDetail(id){
-  const a=apartments.find(x=>x.id===id);if(!a)return;
-  document.getElementById("detail-content").innerHTML=`
-    <div class="detail-img" style="background:${a.color}">${a.emoji}
-      <button class="back-btn" onclick="navigate('home')">←</button>
-    </div>
-    <div class="detail-body">
-      <div class="detail-title">${a.title}</div>
-      <div class="detail-loc">📍 ${a.loc} &nbsp;·&nbsp; ⭐ 4.8 (${a.resa*3} avis)</div>
-      <div class="detail-price-row"><div class="detail-price">${a.price} DT</div><div class="detail-price-unit">/ nuit</div></div>
-      <div class="amenities">${a.amenities.map(am=>`<div class="amenity">${am}</div>`).join("")}</div>
-      <p class="detail-desc">${a.desc}</p>
-      <div class="date-label">Sélectionnez les dates</div>
-      <div class="date-row">
-        <input type="date" class="date-input" id="date-from" onchange="checkAvail(${a.id})" />
-        <input type="date" class="date-input" id="date-to"   onchange="checkAvail(${a.id})" />
-      </div>
-      <div class="avail-box" id="avail-box"></div>
-      <div class="apt-info-row">🛏️ ${a.rooms} chambre(s) &nbsp;·&nbsp; 📐 ${a.surface} m² &nbsp;·&nbsp; 🏠 ${a.type}</div>
-    </div>
-    <button class="reserve-btn" id="reserve-btn" onclick="makeReservation(${a.id})">Réserver maintenant</button>`;
-  showScreen("detail");
-}
+    // Find reservations overlapping this apt in this period
+    const aptResas = reservations.filter(r =>
+      r.apt === aptId && r.from < days[days.length-1] && r.to > days[0]
+    );
 
-function checkAvail(aptId){
-  const f=document.getElementById("date-from").value;
-  const t=document.getElementById("date-to").value;
-  const box=document.getElementById("avail-box");
-  const btn=document.getElementById("reserve-btn");
-  box.className="avail-box";
-  if(!f||!t){btn.disabled=false;return;}
-  if(f>=t){box.textContent="⚠️ La date de fin doit être après la date de début.";box.classList.add("show","err");btn.disabled=true;return;}
-  const conflicts=getConflicts(aptId,f,t);
-  if(conflicts.length){
-    const lines=conflicts.map(c=>`  • ${fmtDate(c.from)} → ${fmtDate(c.to)} (${c.status==="confirmed"?"Confirmée":"En attente"})`).join("\n");
-    box.textContent=`⚠️ Déjà réservé sur ces dates :\n${lines}\nVeuillez choisir d'autres dates.`;
-    box.classList.add("show","err"); btn.disabled=true;
-  } else {
-    const nights=Math.ceil((new Date(t)-new Date(f))/86400000);
-    const a=apartments.find(x=>x.id===aptId);
-    box.textContent=`✅ Disponible ! ${nights} nuit(s) · Total estimé : ${a.price*nights} DT`;
-    box.classList.add("show","ok"); btn.disabled=false;
+    days.forEach((d, di) => {
+      const isToday = d === today;
+      // find resa for this cell
+      const resa = aptResas.find(r => r.from <= d && r.to > d);
+      if (resa) {
+        // Calculate span within visible days
+        const visFrom = resa.from < days[0] ? days[0] : resa.from;
+        const visToRaw = resa.to > days[days.length-1] ? toISO(addDays(parseDate(days[days.length-1]),1)) : resa.to;
+        const visTo = resa.to;
+        // Only render block on first visible day of this resa
+        if (d === visFrom) {
+          const spanDays = Math.min(
+            diffDays(visFrom, resa.to),
+            days.length - di
+          );
+          const color = STATUS_COLOR[resa.status];
+          const name = `${resa.prenom} ${resa.nom}`;
+          html += `<div class="cal-cell${isToday?' today-col':''}" style="position:relative" onclick="handleCellClick('${aptId}','${d}')">
+            <div class="res-span ${STATUS_CSS_CLASS[resa.status]}"
+              style="right:calc(-${spanDays-1}*100% - ${spanDays-1}px - ${spanDays-1}px);min-width:calc(${spanDays}*100% + ${spanDays-1}*1px)"
+              onclick="event.stopPropagation();openEdit('${resa.id}')"
+              title="${name} | ${fmtFull(resa.from)}→${fmtFull(resa.to)} | ${STATUS_LABEL[resa.status]}">
+              ${name}
+            </div>
+          </div>`;
+        } else {
+          // occupied but block started earlier – render empty cell with color bg
+          html += `<div class="cal-cell${isToday?' today-col':''}" style="background:rgba(${hexToRgb(color)},.06)" onclick="event.stopPropagation();openEdit('${resa.id}')"></div>`;
+        }
+      } else {
+        html += `<div class="cal-cell${isToday?' today-col':''}" onclick="handleCellClick('${aptId}','${d}')"></div>`;
+      }
+    });
+  });
+
+  grid.innerHTML = html;
+
+  // Scroll today into view
+  const todayIdx = days.indexOf(today);
+  if (todayIdx >= 0 && calDays === 7) {
+    const wrap = document.getElementById('cal-wrap');
+    const cellW = 44;
+    wrap.scrollLeft = Math.max(0, todayIdx * cellW - 80);
   }
 }
 
-function makeReservation(id){
-  const f=document.getElementById("date-from").value;
-  const t=document.getElementById("date-to").value;
-  if(!f||!t){toast("⚠️ Veuillez sélectionner les dates",true);return;}
-  if(f>=t){toast("⚠️ La date de fin doit être après le début",true);return;}
-  const conflicts=getConflicts(id,f,t);
-  if(conflicts.length){
-    const detail=conflicts.map(c=>`• ${fmtDate(c.from)} → ${fmtDate(c.to)}`).join("\n");
-    showModal("⚠️ Conflit de réservation",`Cet appartement est déjà réservé :\n${detail}\n\nVeuillez choisir d'autres dates.`);
+function hexToRgb(hex) {
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function handleCellClick(aptId, date) {
+  openForm(null, aptId, date);
+}
+
+function navWeek(dir) {
+  calStartDate = addDays(calStartDate, dir * calDays);
+  renderCalendar();
+}
+
+function goToday() {
+  calStartDate = mondayOf(new Date());
+  renderCalendar();
+}
+
+function setDays(n) {
+  calDays = n;
+  document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+n).classList.add('active');
+  renderCalendar();
+}
+
+// ══════════════════════════════════════════
+// LIST RENDER
+// ══════════════════════════════════════════
+function renderList() {
+  const q = (document.getElementById('list-search').value||'').toLowerCase();
+  const aptF = document.getElementById('list-filter-apt').value;
+  const stF  = document.getElementById('list-filter-status').value;
+
+  let list = [...reservations];
+  if (q) list = list.filter(r =>
+    (r.nom||'').toLowerCase().includes(q) ||
+    (r.prenom||'').toLowerCase().includes(q) ||
+    (r.tel||'').includes(q)
+  );
+  if (aptF) list = list.filter(r => r.apt === aptF);
+  if (stF)  list = list.filter(r => r.status === stF);
+
+  // Sort by date desc
+  list.sort((a,b) => b.from.localeCompare(a.from));
+
+  const scroll = document.getElementById('list-scroll');
+  if (!list.length) {
+    scroll.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p>Aucune réservation trouvée</p></div>`;
     return;
   }
-  const a=apartments.find(x=>x.id===id);
-  const nights=Math.ceil((new Date(t)-new Date(f))/86400000);
-  reservations.push({id:Date.now(),aptId:id,from:f,to:t,nights,status:"pending",guest:"Ahmed Hamdi",total:a.price*nights});
-  toast("✅ Réservation envoyée !");
-  setTimeout(()=>navigate("reservations"),1200);
-}
 
-// ══ DEPOSIT ══
-function submitListing(){
-  const title=document.getElementById("dep-title").value.trim();
-  const city=document.getElementById("dep-city").value.trim();
-  const quartier=document.getElementById("dep-quartier").value.trim();
-  const price=parseInt(document.getElementById("dep-price").value);
-  if(!title||!city||!price){toast("⚠️ Remplissez les champs obligatoires",true);return;}
-  const emojis=["🏠","🏡","🏢","🏰","🏗️","🏬"];
-  const colors=["#B5D4F4","#9FE1CB","#FAC775","#F5C4B3","#C0DD97","#CCC0F0"];
-  const newId=Date.now();
-  apartments.unshift({id:newId,title,loc:`${city}${quartier?", "+quartier:""}`,price,type:document.getElementById("dep-type").value,rooms:parseInt(document.getElementById("dep-rooms").value)||1,surface:parseInt(document.getElementById("dep-surface").value)||50,emoji:emojis[Math.floor(Math.random()*emojis.length)],color:colors[Math.floor(Math.random()*colors.length)],desc:document.getElementById("dep-desc").value||"Appartement disponible à la location.",amenities:["📶 WiFi","❄️ Clim"],badge:"Nouveau",resa:0});
-  myListingIds.push(newId);
-  ["dep-title","dep-city","dep-quartier","dep-price","dep-rooms","dep-surface","dep-desc"].forEach(id=>{document.getElementById(id).value="";});
-  toast("✅ Annonce publiée !");
-  setTimeout(()=>navigate("listings"),1200);
-}
-
-// ══ RESERVATIONS ══
-function renderReservations(){
-  autoRelease();
-  let list=reservations;
-  if(currentResaTab==="pending")   list=list.filter(r=>r.status==="pending");
-  if(currentResaTab==="confirmed") list=list.filter(r=>r.status==="confirmed");
-  if(currentResaTab==="released")  list=list.filter(r=>r.status==="released");
-  document.getElementById("resa-count").textContent=list.length+" réservation(s)";
-  document.getElementById("stat-resas").textContent=reservations.length;
-  const sl={pending:"s-pending",confirmed:"s-confirmed",cancelled:"s-cancelled",released:"s-released"};
-  const st={pending:"En attente",confirmed:"Confirmée",cancelled:"Annulée",released:"Libéré"};
-  document.getElementById("resa-list").innerHTML=list.length?list.map(r=>{
-    const a=apartments.find(x=>x.id===r.aptId)||{title:"Appartement supprimé",emoji:"🏠",color:"#eee"};
-    const canRelease=r.status==="confirmed"&&r.to<=todayStr();
-    return`<div class="resa-card">
-      <div class="resa-header">
-        <div class="resa-thumb" style="background:${a.color}">${a.emoji}</div>
-        <div class="resa-info">
-          <div class="resa-title">${a.title}</div>
-          <div class="resa-dates">📅 ${fmtDate(r.from)} → ${fmtDate(r.to)} · ${r.nights} nuit(s)</div>
-          <div class="resa-dates">👤 ${r.guest}</div>
+  scroll.innerHTML = list.map(r => {
+    const nights = diffDays(r.from, r.to);
+    const reste = (r.total||0) - (r.paid||0);
+    return `<div class="res-card">
+      <div class="res-card-header">
+        <div class="res-card-color" style="background:${STATUS_COLOR[r.status]}"></div>
+        <div class="res-card-info">
+          <div class="res-card-name">${r.prenom} ${r.nom}</div>
+          <div class="res-card-sub">📞 ${r.tel||'—'} &nbsp;·&nbsp; ${nights} nuit(s)</div>
         </div>
-        <div class="resa-status ${sl[r.status]}">${st[r.status]}</div>
+        <div>
+          <div class="res-card-apt">${r.apt}</div>
+          <div style="text-align:center;margin-top:4px"><span class="status-badge ${STATUS_CLASS[r.status]}">${STATUS_LABEL[r.status]}</span></div>
+        </div>
       </div>
-      <div class="resa-total">Total : <strong>${r.total} DT</strong></div>
-      <div class="resa-footer">
-        ${r.status==="pending"?`<button class="resa-btn confirm" onclick="confirmResa(${r.id})">✓ Valider</button>`:""}
-        ${(r.status==="pending"||r.status==="confirmed")?`<button class="resa-btn danger" onclick="cancelResa(${r.id})">✕ Annuler</button>`:""}
-        ${canRelease?`<button class="resa-btn release" onclick="releaseResa(${r.id})">🔓 Libérer</button>`:""}
-        <button class="resa-btn" onclick="showResaDetail(${r.id})">Détails</button>
+      <div class="res-card-body">
+        <div class="res-card-row">📅 <strong>${fmtFull(r.from)}</strong></div>
+        <div class="res-card-row">🏁 <strong>${fmtFull(r.to)}</strong></div>
+        <div class="res-card-row">👥 <strong>${r.persons||1}</strong> pers.</div>
+        <div class="res-card-row">💰 Total: <strong>${r.total||0} DT</strong></div>
+        <div class="res-card-row">✅ Payé: <strong>${r.paid||0} DT</strong></div>
+        <div class="res-card-row${reste>0?' ':''}">${reste>0?`⚠️ Reste: <strong style="color:var(--red)">${reste} DT</strong>`:`✔️ <strong style="color:var(--green)">Soldé</strong>`}</div>
+      </div>
+      ${r.notes?`<div style="padding:0 14px 8px;font-size:12px;color:var(--text3)">💬 ${r.notes}</div>`:''}
+      <div class="res-card-footer">
+        <button class="action-btn btn-edit" onclick="openEdit('${r.id}')">✏️ Modifier</button>
+        <button class="action-btn btn-status" onclick="openStatusModal('${r.id}')">🔄 Statut</button>
+        <button class="action-btn btn-del" onclick="confirmDelete('${r.id}')">🗑️ Suppr.</button>
       </div>
     </div>`;
-  }).join(""):`<div class="empty"><div class="empty-icon">📅</div><p>Aucune réservation</p></div>`;
+  }).join('');
 }
 
-function confirmResa(id){const r=reservations.find(x=>x.id===id);if(r){r.status="confirmed";renderReservations();toast("✅ Réservation confirmée !");}}
+// ══════════════════════════════════════════
+// STATS RENDER
+// ══════════════════════════════════════════
+function renderStats() {
+  const total = reservations.length;
+  const active = reservations.filter(r=>r.status!=='cancelled').length;
+  const totalRevenue = reservations.filter(r=>r.status!=='cancelled').reduce((s,r)=>s+(r.total||0),0);
+  const paidRevenue  = reservations.filter(r=>r.status!=='cancelled').reduce((s,r)=>s+(r.paid||0),0);
 
-function cancelResa(id){
-  const r=reservations.find(x=>x.id===id);
-  if(r){
-    r.status="cancelled";
-    renderReservations();
-    renderApts(); // appartement redevient libre
-    toast("Réservation annulée — appartement libéré 🔓");
+  let html = `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total réservations</div></div>
+    <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Actives</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${totalRevenue}</div><div class="stat-lbl">CA total (DT)</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--primary)">${paidRevenue}</div><div class="stat-lbl">Encaissé (DT)</div></div>
+  </div>`;
+
+  // By status
+  html += `<div class="stat-section-title">Par statut</div>`;
+  ['unpaid','advance','paid','cancelled'].forEach(s => {
+    const cnt = reservations.filter(r=>r.status===s).length;
+    const amt = reservations.filter(r=>r.status===s).reduce((a,r)=>a+(r.total||0),0);
+    html += `<div class="apt-stat-row">
+      <div><div class="apt-stat-name"><span class="status-badge ${STATUS_CLASS[s]}">${STATUS_LABEL[s]}</span></div><div class="apt-stat-details">${cnt} réservation(s)</div></div>
+      <div class="apt-stat-amount">${amt} DT</div>
+    </div>`;
+  });
+
+  // By apt
+  html += `<div class="stat-section-title">Par appartement</div>`;
+  APT_IDS.forEach(aptId => {
+    const resas = reservations.filter(r=>r.apt===aptId && r.status!=='cancelled');
+    if (!resas.length) return;
+    const nights = resas.reduce((s,r)=>s+diffDays(r.from,r.to),0);
+    const amount = resas.reduce((s,r)=>s+(r.total||0),0);
+    html += `<div class="apt-stat-row">
+      <div><div class="apt-stat-name">${aptId}</div><div class="apt-stat-details">${resas.length} résa · ${nights} nuits</div></div>
+      <div class="apt-stat-amount">${amount} DT</div>
+    </div>`;
+  });
+
+  document.getElementById('stats-scroll').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// FORM
+// ══════════════════════════════════════════
+function openForm(id, preApt, preDate) {
+  editingResId = id || null;
+  document.getElementById('form-title').textContent = id ? 'Modifier réservation' : 'Nouvelle réservation';
+  document.getElementById('conflict-warning').style.display = 'none';
+
+  if (id) {
+    const r = reservations.find(x=>x.id===id);
+    if (!r) return;
+    document.getElementById('f-id').value     = r.id;
+    document.getElementById('f-prenom').value = r.prenom||'';
+    document.getElementById('f-nom').value    = r.nom||'';
+    document.getElementById('f-tel').value    = r.tel||'';
+    document.getElementById('f-apt').value    = r.apt||'';
+    document.getElementById('f-from').value   = r.from||'';
+    document.getElementById('f-to').value     = r.to||'';
+    document.getElementById('f-persons').value= r.persons||2;
+    document.getElementById('f-status').value = r.status||'unpaid';
+    document.getElementById('f-total').value  = r.total||0;
+    document.getElementById('f-paid').value   = r.paid||0;
+    document.getElementById('f-notes').value  = r.notes||'';
+    calcTotal();
+  } else {
+    document.getElementById('f-id').value='';
+    document.getElementById('f-prenom').value='';
+    document.getElementById('f-nom').value='';
+    document.getElementById('f-tel').value='';
+    document.getElementById('f-apt').value=preApt||APT_IDS[0];
+    document.getElementById('f-from').value=preDate||'';
+    document.getElementById('f-to').value='';
+    document.getElementById('f-persons').value=2;
+    document.getElementById('f-status').value='unpaid';
+    document.getElementById('f-total').value='';
+    document.getElementById('f-paid').value='';
+    document.getElementById('f-notes').value='';
+    document.getElementById('f-calc').textContent='Sélectionnez un appartement et des dates';
+  }
+  document.getElementById('modal-form').classList.add('show');
+}
+
+function openEdit(id) { openForm(id); }
+
+function closeForm() {
+  document.getElementById('modal-form').classList.remove('show');
+  editingResId = null;
+}
+
+function calcTotal() {
+  const aptId = document.getElementById('f-apt').value;
+  const from  = document.getElementById('f-from').value;
+  const to    = document.getElementById('f-to').value;
+  const warn  = document.getElementById('conflict-warning');
+
+  if (aptId && from && to && from < to) {
+    const nights = diffDays(from, to);
+    const price  = (aptConfig[aptId]||{}).price || 0;
+    const auto   = nights * price;
+    document.getElementById('f-calc').textContent =
+      `${nights} nuit(s) × ${price} DT = ${auto} DT`;
+    if (!document.getElementById('f-total').value || document.getElementById('f-total').dataset.auto === '1') {
+      document.getElementById('f-total').value = auto;
+      document.getElementById('f-total').dataset.auto = '1';
+    }
+    // Conflict check
+    const conflicts = hasConflict(aptId, from, to, editingResId);
+    if (conflicts.length) {
+      const names = conflicts.map(c=>`${c.prenom} ${c.nom} (${fmtFull(c.from)}→${fmtFull(c.to)})`).join(', ');
+      warn.textContent = `⚠️ Conflit avec : ${names}`;
+      warn.style.display = 'block';
+    } else {
+      warn.style.display = 'none';
+    }
+  } else {
+    document.getElementById('f-calc').textContent = 'Sélectionnez un appartement et des dates';
   }
 }
 
-function releaseResa(id){
-  const r=reservations.find(x=>x.id===id);
-  if(r){r.status="released";renderReservations();renderApts();toast("🔓 Appartement libéré avec succès !");}
+function saveReservation() {
+  const prenom = document.getElementById('f-prenom').value.trim();
+  const nom    = document.getElementById('f-nom').value.trim();
+  const from   = document.getElementById('f-from').value;
+  const to     = document.getElementById('f-to').value;
+  const apt    = document.getElementById('f-apt').value;
+
+  if (!prenom||!nom) { toast('Prénom et nom requis','err'); return; }
+  if (!from||!to||from>=to) { toast('Dates invalides','err'); return; }
+  if (!apt) { toast('Appartement requis','err'); return; }
+
+  const id = editingResId || Date.now().toString();
+  const r = {
+    id, prenom, nom,
+    tel:     document.getElementById('f-tel').value.trim(),
+    apt,
+    from, to,
+    persons: parseInt(document.getElementById('f-persons').value)||1,
+    status:  document.getElementById('f-status').value,
+    total:   parseFloat(document.getElementById('f-total').value)||0,
+    paid:    parseFloat(document.getElementById('f-paid').value)||0,
+    notes:   document.getElementById('f-notes').value.trim(),
+  };
+
+  if (editingResId) {
+    const idx = reservations.findIndex(x=>x.id===editingResId);
+    if (idx>=0) reservations[idx] = r;
+  } else {
+    reservations.push(r);
+  }
+
+  saveData();
+  closeForm();
+  refreshAll();
+  toast(editingResId?'Réservation modifiée ✓':'Réservation ajoutée ✓','ok');
 }
 
-function showResaDetail(id){
-  const r=reservations.find(x=>x.id===id);
-  const a=apartments.find(x=>x.id===r.aptId);
-  const st={pending:"En attente",confirmed:"Confirmée",cancelled:"Annulée",released:"Libéré"};
-  showModal("Détails réservation",`Appartement : ${a?a.title:"(supprimé)"}\n📅 ${fmtDate(r.from)} → ${fmtDate(r.to)}\n🌙 ${r.nights} nuit(s)\n👤 ${r.guest}\n💰 Total : ${r.total} DT\n📌 Statut : ${st[r.status]}`);
+// ══════════════════════════════════════════
+// STATUS CHANGE
+// ══════════════════════════════════════════
+function openStatusModal(id) {
+  statusTargetId = id;
+  document.getElementById('modal-status').classList.add('show');
+}
+function closeStatusModal() {
+  document.getElementById('modal-status').classList.remove('show');
+  statusTargetId = null;
+}
+function setStatus(s) {
+  if (!statusTargetId) return;
+  const r = reservations.find(x=>x.id===statusTargetId);
+  if (r) { r.status=s; saveData(); refreshAll(); toast('Statut mis à jour','ok'); }
+  closeStatusModal();
 }
 
-function setResaTab(tab,el){
-  document.querySelectorAll("#screen-reservations .chip").forEach(c=>c.classList.remove("active"));
-  el.classList.add("active"); currentResaTab=tab; renderReservations();
+// ══════════════════════════════════════════
+// DELETE
+// ══════════════════════════════════════════
+function confirmDelete(id) {
+  const r = reservations.find(x=>x.id===id);
+  if (!r) return;
+  openConfirm('Supprimer la réservation', `Supprimer la réservation de ${r.prenom} ${r.nom} (${r.apt}, ${fmtFull(r.from)}→${fmtFull(r.to)}) ?`, ()=>{
+    reservations = reservations.filter(x=>x.id!==id);
+    saveData(); refreshAll(); toast('Réservation supprimée','ok');
+  });
 }
 
-// ══ MY LISTINGS ══
-function renderMyListings(){
-  autoRelease();
-  const mine=apartments.filter(a=>myListingIds.includes(a.id));
-  document.getElementById("listings-count").textContent=mine.length+" annonce(s) active(s)";
-  document.getElementById("stat-apts").textContent=mine.length;
-  document.getElementById("my-listings").innerHTML=mine.length?mine.map(a=>{
-    const occ=isOccupied(a.id,todayStr(),addDay(todayStr(),1));
-    return`<div class="listing-card">
-      <div class="listing-thumb" style="background:${a.color}">${a.emoji}</div>
-      <div class="listing-info">
-        <div class="listing-title">${a.title}</div>
-        <div class="listing-price">${a.price} DT / nuit</div>
-        <div class="listing-stats">👁️ ${a.resa*12} vues · 📅 ${a.resa} résa &nbsp;·&nbsp; <span style="color:${occ?"#A32D2D":"#3B6D11"};font-weight:600">${occ?"🔴 Occupé":"🟢 Libre"}</span></div>
-      </div>
-      <div class="listing-actions">
-        <button class="icon-btn" onclick="toast('Modification de l\'annonce')">✏️</button>
-        <button class="icon-btn del" onclick="deleteListing(${a.id})">🗑️</button>
-      </div>
+// ══════════════════════════════════════════
+// CONFIRM MODAL
+// ══════════════════════════════════════════
+function openConfirm(title, msg, cb) {
+  confirmCallback = cb;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-yes-btn').onclick = () => { closeConfirm(); if(confirmCallback)confirmCallback(); };
+  document.getElementById('modal-confirm').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('modal-confirm').classList.remove('show');
+  confirmCallback = null;
+}
+
+// ══════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════
+function openSettings() {
+  // Render apt price editors
+  let html = APT_IDS.map(id => {
+    const cfg = aptConfig[id]||{};
+    return `<div class="apt-edit-row">
+      <div class="apt-edit-name">${id}</div>
+      <input class="apt-edit-input" type="number" placeholder="Prix/nuit" value="${cfg.price||''}" id="apt-price-${id}" oninput="updateAptPrice('${id}')"/>
+      <input class="apt-edit-input" type="number" placeholder="Capacité" value="${cfg.capacity||''}" id="apt-cap-${id}" style="max-width:70px" oninput="updateAptCap('${id}')"/>
     </div>`;
-  }).join(""):`<div class="empty"><div class="empty-icon">🏠</div><p>Aucune annonce publiée</p></div>`;
+  }).join('');
+  document.getElementById('apt-price-list').innerHTML = html;
+  document.getElementById('modal-settings').classList.add('show');
+}
+function closeSettings() { document.getElementById('modal-settings').classList.remove('show'); }
+function updateAptPrice(id) {
+  if (!aptConfig[id]) aptConfig[id]={};
+  aptConfig[id].price = parseFloat(document.getElementById('apt-price-'+id).value)||0;
+  saveData();
+}
+function updateAptCap(id) {
+  if (!aptConfig[id]) aptConfig[id]={};
+  aptConfig[id].capacity = document.getElementById('apt-cap-'+id).value||'';
+  saveData();
 }
 
-function deleteListing(id){
-  myListingIds.splice(myListingIds.indexOf(id),1);
-  apartments.splice(apartments.findIndex(a=>a.id===id),1);
-  renderMyListings(); renderApts(); toast("🗑️ Annonce supprimée");
+// ══════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════
+function openSearch() {
+  document.getElementById('search-global').value = '';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('modal-search').classList.add('show');
+  setTimeout(()=>document.getElementById('search-global').focus(),300);
+}
+function closeSearch() { document.getElementById('modal-search').classList.remove('show'); }
+function renderSearchResults() {
+  const q = document.getElementById('search-global').value.toLowerCase().trim();
+  if (!q) { document.getElementById('search-results').innerHTML=''; return; }
+  const matches = reservations.filter(r=>
+    (r.nom||'').toLowerCase().includes(q)||
+    (r.prenom||'').toLowerCase().includes(q)||
+    (r.tel||'').includes(q)
+  );
+  if (!matches.length) {
+    document.getElementById('search-results').innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">Aucun résultat</div>';
+    return;
+  }
+  document.getElementById('search-results').innerHTML = matches.map(r=>`
+    <div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="closeSearch();openEdit('${r.id}')">
+      <div style="font-size:14px;font-weight:700">${r.prenom} ${r.nom} <span style="font-size:11px;color:var(--primary);font-weight:400;margin-left:6px">${r.apt}</span></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px">📞 ${r.tel||'—'} &nbsp;·&nbsp; ${fmtFull(r.from)} → ${fmtFull(r.to)}</div>
+      <div style="margin-top:4px"><span class="status-badge ${STATUS_CLASS[r.status]}">${STATUS_LABEL[r.status]}</span> <span style="font-size:12px;color:var(--text2);margin-left:6px">💰 ${r.total||0} DT</span></div>
+    </div>`).join('');
 }
 
-// ══ NAVIGATION ══
-function showScreen(n){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-"+n).classList.add("active");}
-function navigate(n){
-  showScreen(n);
-  document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
-  const m={home:"nav-home",deposit:"nav-deposit",reservations:"nav-reservations",listings:"nav-listings",profile:"nav-profile"};
-  if(m[n])document.getElementById(m[n]).classList.add("active");
-  if(n==="home")renderApts();
-  if(n==="reservations")renderReservations();
-  if(n==="listings")renderMyListings();
+// ══════════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════════
+function exportJSON() {
+  const data = { reservations, aptConfig, exportDate: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gestappart_${toISO(new Date())}.json`;
+  a.click();
+  toast('Export téléchargé ✓','ok');
+}
+function triggerImport() { document.getElementById('import-file').click(); }
+function importJSON(e) {
+  const file = e.target.files[0]; if(!file)return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.reservations) {
+        openConfirm('Importer des données', `Importer ${data.reservations.length} réservations ? Les données actuelles seront remplacées.`, ()=>{
+          reservations = data.reservations;
+          if (data.aptConfig) aptConfig = data.aptConfig;
+          saveData(); refreshAll(); closeSettings(); toast('Import réussi ✓','ok');
+        });
+      } else { toast('Fichier invalide','err'); }
+    } catch { toast('Erreur lecture fichier','err'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function confirmClearAll() {
+  openConfirm('Effacer toutes les données','Toutes les réservations seront supprimées définitivement. Continuer ?',()=>{
+    reservations=[];saveData();refreshAll();closeSettings();toast('Données effacées','ok');
+  });
 }
 
-// ══ MODAL ══
-function showModal(title,body){
-  document.getElementById("modal-title").textContent=title;
-  document.getElementById("modal-body").style.whiteSpace="pre-wrap";
-  document.getElementById("modal-body").textContent=body;
-  document.getElementById("modal").classList.add("show");
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  if (tab==='cal') renderCalendar();
+  if (tab==='list') renderList();
+  if (tab==='stats') renderStats();
+  // Show/hide FAB
+  document.getElementById('fab').style.display = tab==='stats'?'none':'flex';
 }
-function closeModal(){document.getElementById("modal").classList.remove("show");}
 
-// ══ TOAST ══
-function toast(msg,isErr){
-  const el=document.getElementById("toast-el");
-  el.textContent=msg; el.className="toast"+(isErr?" err":"");
-  el.classList.add("show"); clearTimeout(el._t);
-  el._t=setTimeout(()=>el.classList.remove("show"),2800);
+function refreshAll() {
+  if (currentTab==='cal') renderCalendar();
+  if (currentTab==='list') renderList();
+  if (currentTab==='stats') renderStats();
 }
 
-// ── SW ──
-if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type?' '+type:'');
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'),2500);
+}
 
-// ── Init ──
-autoRelease(); renderApts(); renderReservations(); renderMyListings();
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+function init() {
+  loadData();
+
+  // Populate apt selectors
+  const fApt = document.getElementById('f-apt');
+  const filterApt = document.getElementById('list-filter-apt');
+  APT_IDS.forEach(id => {
+    fApt.add(new Option(id, id));
+    filterApt.add(new Option(id, id));
+  });
+
+  // Set calendar start to current Monday
+  calStartDate = mondayOf(new Date());
+  renderCalendar();
+  renderList();
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) {
+        overlay.classList.remove('show');
+        editingResId = null;
+        statusTargetId = null;
+      }
+    });
+  });
+}
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+init();
 </script>
 </body>
 </html>
