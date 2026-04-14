@@ -657,10 +657,11 @@ function renderCalendar() {
 
   APT_IDS.forEach((aptId, rowIdx) => {
     const aptResas = reservations.filter(r =>
-      r.apt === aptId &&
-      r.from <= end &&
-      r.to   >  start
-    );
+  r.apt === aptId &&
+  r.status !== 'cancelled' && // 🔴 IMPORTANT
+  r.from <= end &&
+  r.to > start
+);
 
     aptResas.forEach(resa => {
       // Clamp to visible range
