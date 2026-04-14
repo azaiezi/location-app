@@ -994,8 +994,27 @@ function closeStatusModal() {
 }
 function setStatus(s) {
   if (!statusTargetId) return;
-  const r = reservations.find(x=>x.id===statusTargetId);
-  if (r) { r.status=s; saveData(); refreshAll(); toast('Statut mis à jour','ok'); }
+
+  const r = reservations.find(x => x.id === statusTargetId);
+  if (!r) return;
+
+  // 🔴 vérifier conflit si on réactive
+  if (s !== 'cancelled') {
+    const conflicts = hasConflict(r.apt, r.from, r.to, r.id);
+
+    if (conflicts.length > 0) {
+      toast("❌ Impossible : conflit avec une autre réservation", "err");
+      return;
+    }
+  }
+
+  r.status = s;
+
+  saveData();
+  refreshAll();
+
+  toast('Statut mis à jour','ok');
+
   closeStatusModal();
 }
 
