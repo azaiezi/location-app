@@ -719,19 +719,27 @@ function renderStats() {
   // By apt
   html += `<div class="stat-section-title">Par appartement</div>`;
   APT_IDS.forEach(aptId => {
-    const resas = reservations.filter(r=>r.apt===aptId && r.status!=='cancelled');
-    if (!resas.length) return;
-    const nights = resas.reduce((s,r)=>s+diffDays(r.from,r.to),0);
-    const amount = resas.reduce((s,r)=>s+(r.total||0),0);
-    html += `<div class="apt-stat-row">
-      <div><div class="apt-stat-name">${aptId}</div><div class="apt-stat-details">${resas.length} résa · ${nights} nuits</div></div>
-      <div class="apt-stat-amount">${amount} DT</div>
-    </div>`;
-  });
+    const resa = aptResas.find(r => d >= r.from && d < r.to);
+
+if (resa) {
+  const spanDays = diffDays(resa.from, resa.to);
+  const name = `${resa.prenom} ${resa.nom}`;
+
+  html += `
+  <div class="cal-cell" onclick="openEdit('${resa.id}')">
+    <div class="res-block ${STATUS_CSS_CLASS[resa.status]}">
+      ${name}
+    </div>
+  </div>`;
+} else {
+  html += `<div class="cal-cell" onclick="handleCellClick('${aptId}','${d}')"></div>`;
+}
 
   document.getElementById('stats-scroll').innerHTML = html;
 }
 
+
+  
 // ══════════════════════════════════════════
 // FORM
 // ══════════════════════════════════════════
