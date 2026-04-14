@@ -550,8 +550,11 @@ function renderCalendar() {
 
     // Find reservations overlapping this apt in this period
     const aptResas = reservations.filter(r =>
-      r.apt === aptId && r.from < days[days.length-1] && r.to > days[0]
-    );
+  r.apt === aptId &&
+  r.status !== 'cancelled' &&
+  r.from < days[days.length-1] &&
+  r.to > days[0]
+);
 
     days.forEach((d, di) => {
       const isToday = d === today;
