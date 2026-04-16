@@ -446,7 +446,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <div class="status-opt" onclick="setStatus('unpaid')"><div class="status-dot" style="background:var(--red)"></div>Non payé</div>
         <div class="status-opt" onclick="setStatus('advance')"><div class="status-dot" style="background:var(--yellow)"></div>Avance versée</div>
         <div class="status-opt" onclick="setStatus('paid')"><div class="status-dot" style="background:var(--green)"></div>Payé totalement</div>
-        <div class="status-opt" onclick="setStatus('cancelled')"><div class="status-dot" style="background:var(--gray)"></div></div>
+        <div class="status-opt" onclick=""><div class="status-dot" style="background:var(--gray)"></div></div>
       </div>
     </div>
   </div>
@@ -913,22 +913,11 @@ function renderStats() {
   let html = `<div class="stats-grid">
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Réservations</div></div>
     <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Actives</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${totalRevenue}</div><div class="stat-lbl">CA (DT)</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--primary)">${paidRevenue}</div><div class="stat-lbl">Encaissé (DT)</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${totalRevenue}</div><div class="stat-lbl">CA</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--primary)">${paidRevenue}</div><div class="stat-lbl">Encaissé</div></div>
   </div>`;
 
   // By status
-  html += `<div class="stat-section-title">Par statut</div>`;
-  ['unpaid','advance','paid','cancelled'].forEach(s => {
-    const cnt = reservations.filter(r=>r.status===s).length;
-    const amt = reservations.filter(r=>r.status===s).reduce((a,r)=>a+(r.total||0),0);
-    html += `<div class="apt-stat-row">
-      <div><div class="apt-stat-name"><span class="status-badge ${STATUS_CLASS[s]}">${STATUS_LABEL[s]}</span></div><div class="apt-stat-details">${cnt} réservation(s)</div></div>
-      <div class="apt-stat-amount">${amt} DT</div>
-    </div>`;
-  });
-
-  // By apt
   html += `<div class="stat-section-title">Par appartement</div>`;
   APT_IDS.forEach(aptId => {
     const resas = reservations.filter(r=>r.apt===aptId && r.status!=='cancelled');
