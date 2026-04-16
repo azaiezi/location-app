@@ -474,6 +474,68 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
           <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)"/>
           <button class="settings-btn" onclick="confirmClearAll()"><span class="settings-btn-icon" style="color:var(--red)">🗑️</span><span style="color:var(--red)">Effacer toutes les données</span></button>
         </div>
+
+        <!-- ── SAUVEGARDE AUTOMATIQUE ── -->
+        <div class="settings-section">
+          <div class="settings-section-title">💾 Sauvegarde automatique</div>
+
+          <!-- Toggle ON/OFF -->
+          <div style="background:var(--bg3);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text)">Sauvegarde quotidienne</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px">Télécharge un fichier JSON chaque soir</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:46px;height:26px;cursor:pointer">
+              <input type="checkbox" id="auto-backup-toggle" onchange="toggleAutoBackup()" style="opacity:0;width:0;height:0"/>
+              <span id="auto-backup-slider" style="position:absolute;inset:0;border-radius:26px;background:var(--bg4);transition:background .3s">
+                <span id="auto-backup-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,.3)"></span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Heure de sauvegarde -->
+          <div style="background:var(--bg3);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text)">Heure de sauvegarde</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px">Par défaut : 22h00</div>
+            </div>
+            <input type="time" id="auto-backup-time" value="22:00" onchange="saveBackupSettings()"
+              style="background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:14px;color:var(--text);font-family:inherit;outline:none;width:90px;text-align:center"/>
+          </div>
+
+          <!-- Nombre de sauvegardes à conserver -->
+          <div style="background:var(--bg3);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text)">Historique conservé</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:2px">Nombre de sauvegardes locales</div>
+            </div>
+            <select id="auto-backup-keep" onchange="saveBackupSettings()"
+              style="background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit;outline:none">
+              <option value="3">3 jours</option>
+              <option value="7" selected>7 jours</option>
+              <option value="14">14 jours</option>
+              <option value="30">30 jours</option>
+            </select>
+          </div>
+
+          <!-- Dernière sauvegarde -->
+          <div style="background:var(--bg3);border-radius:12px;padding:12px 16px;margin-bottom:10px">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Dernière sauvegarde automatique</div>
+            <div id="last-auto-backup" style="font-size:13px;font-weight:600;color:var(--text)">Aucune</div>
+          </div>
+
+          <!-- Sauvegardes stockées -->
+          <div style="background:var(--bg3);border-radius:12px;padding:12px 16px;margin-bottom:10px">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Sauvegardes locales stockées</div>
+            <div id="backup-list" style="font-size:12px;color:var(--text2)">Aucune sauvegarde</div>
+          </div>
+
+          <!-- Actions manuelles sur l'auto-backup -->
+          <button class="settings-btn" onclick="runAutoBackupNow()"><span class="settings-btn-icon">⚡</span>Lancer la sauvegarde maintenant</button>
+          <button class="settings-btn" onclick="showRestoreBackups()"><span class="settings-btn-icon">🔄</span>Restaurer depuis une sauvegarde auto</button>
+          <button class="settings-btn" onclick="clearAutoBackups()"><span class="settings-btn-icon" style="color:var(--red)">🗑️</span><span style="color:var(--red)">Effacer les sauvegardes automatiques</span></button>
+        </div>
+
         <div class="settings-section">
           <div class="settings-section-title">À propos</div>
           <div style="font-size:13px;color:var(--text2);line-height:1.6">GestAppart v1.0 — Application offline PWA<br>Données stockées localement sur cet appareil.</div>
@@ -493,6 +555,20 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <input class="form-control" id="search-global" placeholder="Nom, prénom ou téléphone…" oninput="renderSearchResults()" autofocus/>
       </div>
       <div id="search-results" style="max-height:50vh;overflow-y:auto;padding:0 18px 20px"></div>
+    </div>
+  </div>
+
+  <!-- RESTORE FROM AUTO-BACKUP MODAL -->
+  <div class="modal-overlay" id="modal-restore">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🔄 Restaurer une sauvegarde</div>
+        <button class="modal-close" onclick="document.getElementById('modal-restore').classList.remove('show')">×</button>
+      </div>
+      <div style="padding:14px 18px 20px">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Choisissez une sauvegarde automatique à restaurer. Les données actuelles seront remplacées.</div>
+        <div id="restore-list"></div>
+      </div>
     </div>
   </div>
 
@@ -1154,8 +1230,312 @@ function confirmClearAll() {
 }
 
 // ══════════════════════════════════════════
-// NAVIGATION
+// AUTO-BACKUP SYSTEM
 // ══════════════════════════════════════════
+
+// ── Clés localStorage ──
+const BACKUP_SETTINGS_KEY = 'gestappart_backup_settings';
+const BACKUP_STORE_KEY    = 'gestappart_auto_backups';   // stocke les N dernières sauvegardes
+const BACKUP_LAST_KEY     = 'gestappart_last_backup';    // date ISO de la dernière sauvegarde
+
+// ── Charger / sauvegarder les préférences ──
+function loadBackupSettings() {
+  try {
+    const s = localStorage.getItem(BACKUP_SETTINGS_KEY);
+    return s ? JSON.parse(s) : { enabled: false, time: '22:00', keep: 7 };
+  } catch { return { enabled: false, time: '22:00', keep: 7 }; }
+}
+
+function saveBackupSettings() {
+  const settings = {
+    enabled : document.getElementById('auto-backup-toggle').checked,
+    time    : document.getElementById('auto-backup-time').value  || '22:00',
+    keep    : parseInt(document.getElementById('auto-backup-keep').value) || 7,
+  };
+  localStorage.setItem(BACKUP_SETTINGS_KEY, JSON.stringify(settings));
+  updateToggleUI(settings.enabled);
+  scheduleAutoBackup(); // recalcule le prochain déclenchement
+  toast(settings.enabled ? '⏰ Sauvegarde automatique activée' : 'Sauvegarde automatique désactivée', 'ok');
+}
+
+function toggleAutoBackup() {
+  saveBackupSettings();
+}
+
+// ── Mise à jour visuelle du toggle ──
+function updateToggleUI(enabled) {
+  const slider = document.getElementById('auto-backup-slider');
+  const knob   = document.getElementById('auto-backup-knob');
+  if (!slider || !knob) return;
+  if (enabled) {
+    slider.style.background = 'var(--primary)';
+    knob.style.transform = 'translateX(20px)';
+  } else {
+    slider.style.background = 'var(--bg4)';
+    knob.style.transform = 'translateX(0)';
+  }
+}
+
+// ── Appliquer les réglages dans l'UI ──
+function applyBackupSettingsToUI() {
+  const s = loadBackupSettings();
+  const toggle = document.getElementById('auto-backup-toggle');
+  const timeEl = document.getElementById('auto-backup-time');
+  const keepEl = document.getElementById('auto-backup-keep');
+  if (toggle) toggle.checked = s.enabled;
+  if (timeEl) timeEl.value   = s.time;
+  if (keepEl) keepEl.value   = String(s.keep);
+  updateToggleUI(s.enabled);
+  renderLastBackupInfo();
+  renderBackupList();
+}
+
+// ── Créer un snapshot des données ──
+function createBackupSnapshot() {
+  return {
+    date         : new Date().toISOString(),
+    reservations : JSON.parse(JSON.stringify(reservations)),
+    aptConfig    : JSON.parse(JSON.stringify(aptConfig)),
+    version      : '1.0',
+  };
+}
+
+// ── Sauvegarder un snapshot dans localStorage ──
+function storeBackupSnapshot(snapshot) {
+  const s = loadBackupSettings();
+  let backups = [];
+  try {
+    const raw = localStorage.getItem(BACKUP_STORE_KEY);
+    if (raw) backups = JSON.parse(raw);
+  } catch {}
+
+  // Ajouter en tête
+  backups.unshift(snapshot);
+
+  // Garder uniquement les N dernières
+  backups = backups.slice(0, s.keep);
+
+  localStorage.setItem(BACKUP_STORE_KEY, JSON.stringify(backups));
+  localStorage.setItem(BACKUP_LAST_KEY, snapshot.date);
+}
+
+// ── Déclencher une sauvegarde (avec téléchargement fichier) ──
+function performAutoBackup(isManual) {
+  const snapshot = createBackupSnapshot();
+
+  // 1) Stocker dans localStorage
+  storeBackupSnapshot(snapshot);
+
+  // 2) Télécharger un fichier JSON sur l'appareil
+  const dateStr = snapshot.date.slice(0,10);
+  const timeStr = snapshot.date.slice(11,16).replace(':','-');
+  const label   = isManual ? 'manuel' : 'auto';
+  const filename = `gestappart_backup_${label}_${dateStr}_${timeStr}.json`;
+
+  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+
+  // 3) Mettre à jour l'UI
+  renderLastBackupInfo();
+  renderBackupList();
+
+  toast(isManual ? '💾 Sauvegarde téléchargée ✓' : '💾 Sauvegarde automatique effectuée ✓', 'ok');
+}
+
+// ── Lancer manuellement depuis les paramètres ──
+function runAutoBackupNow() {
+  performAutoBackup(true);
+}
+
+// ── Afficher la date de la dernière sauvegarde ──
+function renderLastBackupInfo() {
+  const el = document.getElementById('last-auto-backup');
+  if (!el) return;
+  const last = localStorage.getItem(BACKUP_LAST_KEY);
+  if (!last) { el.textContent = 'Aucune'; return; }
+  const d = new Date(last);
+  el.textContent = d.toLocaleDateString('fr-FR', {
+    weekday:'long', day:'2-digit', month:'long', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+
+// ── Afficher la liste des sauvegardes stockées ──
+function renderBackupList() {
+  const el = document.getElementById('backup-list');
+  if (!el) return;
+  let backups = [];
+  try {
+    const raw = localStorage.getItem(BACKUP_STORE_KEY);
+    if (raw) backups = JSON.parse(raw);
+  } catch {}
+
+  if (!backups.length) { el.textContent = 'Aucune sauvegarde'; return; }
+
+  el.innerHTML = backups.map((b, i) => {
+    const d = new Date(b.date);
+    const label = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const count = (b.reservations||[]).length;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);last-child{border:none}">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${label}</div>
+        <div style="font-size:11px;color:var(--text3)">${count} réservation(s)</div>
+      </div>
+      <button onclick="downloadStoredBackup(${i})" style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--primary);cursor:pointer;font-family:inherit">📥</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Télécharger une sauvegarde stockée ──
+function downloadStoredBackup(index) {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem(BACKUP_STORE_KEY)||'[]'); } catch {}
+  const b = backups[index]; if (!b) return;
+  const dateStr = b.date.slice(0,10);
+  const blob = new Blob([JSON.stringify(b, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gestappart_backup_${dateStr}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  toast('📥 Fichier téléchargé', 'ok');
+}
+
+// ── Afficher la modale de restauration ──
+function showRestoreBackups() {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem(BACKUP_STORE_KEY)||'[]'); } catch {}
+
+  const listEl = document.getElementById('restore-list');
+  if (!backups.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">Aucune sauvegarde disponible</div>';
+  } else {
+    listEl.innerHTML = backups.map((b, i) => {
+      const d = new Date(b.date);
+      const label = d.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const count = (b.reservations||[]).length;
+      return `<div style="background:var(--bg3);border-radius:10px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${label}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${count} réservation(s) · ${(b.aptConfig?Object.keys(b.aptConfig).length:0)} appart.</div>
+        </div>
+        <button onclick="restoreFromBackup(${i})" style="background:var(--primary);border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit">Restaurer</button>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('modal-restore').classList.add('show');
+}
+
+// ── Restaurer depuis une sauvegarde ──
+function restoreFromBackup(index) {
+  let backups = [];
+  try { backups = JSON.parse(localStorage.getItem(BACKUP_STORE_KEY)||'[]'); } catch {}
+  const b = backups[index]; if (!b) return;
+
+  openConfirm(
+    'Restaurer la sauvegarde',
+    `Restaurer les données du ${new Date(b.date).toLocaleDateString('fr-FR')} ? Les données actuelles seront remplacées.`,
+    () => {
+      reservations = b.reservations || [];
+      aptConfig    = b.aptConfig    || {};
+      // S'assurer que tous les APTs sont présents
+      APT_IDS.forEach(id => { if (!aptConfig[id]) aptConfig[id] = { price: 100, capacity: '' }; });
+      saveData();
+      refreshAll();
+      document.getElementById('modal-restore').classList.remove('show');
+      closeSettings();
+      toast('✅ Données restaurées avec succès', 'ok');
+    }
+  );
+}
+
+// ── Effacer les sauvegardes auto ──
+function clearAutoBackups() {
+  openConfirm(
+    'Effacer les sauvegardes',
+    'Supprimer toutes les sauvegardes automatiques stockées localement ?',
+    () => {
+      localStorage.removeItem(BACKUP_STORE_KEY);
+      localStorage.removeItem(BACKUP_LAST_KEY);
+      renderLastBackupInfo();
+      renderBackupList();
+      toast('Sauvegardes effacées', 'ok');
+    }
+  );
+}
+
+// ══════════════════════════════════════════
+// PLANIFICATEUR DE SAUVEGARDE QUOTIDIENNE
+// ══════════════════════════════════════════
+let _backupTimer = null;
+
+function scheduleAutoBackup() {
+  // Annuler le timer précédent
+  if (_backupTimer) { clearTimeout(_backupTimer); _backupTimer = null; }
+
+  const s = loadBackupSettings();
+  if (!s.enabled) return;
+
+  const now      = new Date();
+  const [hh, mm] = s.time.split(':').map(Number);
+
+  // Calculer la prochaine occurrence (aujourd'hui ou demain)
+  const target = new Date(now);
+  target.setHours(hh, mm, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1); // déjà passée → demain
+
+  const msUntil = target - now;
+
+  // Sécurité : setTimeout max ~24.8 jours en JS; ici on est < 24h, pas de problème
+  _backupTimer = setTimeout(() => {
+    performAutoBackup(false);       // sauvegarde automatique
+    scheduleAutoBackup();           // reprogrammer pour le lendemain
+  }, msUntil);
+
+  console.log(`[GestAppart] Prochaine sauvegarde auto : ${target.toLocaleString('fr-FR')}`);
+}
+
+// ── Vérifier si une sauvegarde manquée doit être rattrapée ──
+function checkMissedBackup() {
+  const s = loadBackupSettings();
+  if (!s.enabled) return;
+
+  const last = localStorage.getItem(BACKUP_LAST_KEY);
+  if (!last) return; // jamais sauvegardé, on attend l'heure programmée
+
+  const lastDate  = new Date(last);
+  const today     = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  // Si la dernière sauvegarde date d'avant hier → sauvegarde manquée
+  if (lastDate < yesterday) {
+    // Rattraper silencieusement sans téléchargement (juste stocker)
+    const snapshot = createBackupSnapshot();
+    storeBackupSnapshot(snapshot);
+    renderLastBackupInfo();
+    renderBackupList();
+    console.log('[GestAppart] Sauvegarde manquée rattrapée au démarrage');
+  }
+}
+
+// ── Hook openSettings pour rafraîchir l'UI ──
+const _origOpenSettings = openSettings;
+function openSettings() {
+  _origOpenSettings();
+  // Léger délai pour que le DOM soit rendu
+  setTimeout(applyBackupSettingsToUI, 50);
+}
+
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -1238,6 +1618,10 @@ function init() {
       }
     });
   });
+
+  // ── Sauvegarde automatique ──
+  checkMissedBackup();   // rattraper une sauvegarde manquée si l'app était fermée
+  scheduleAutoBackup();  // programmer la prochaine sauvegarde du soir
 }
 
 // Service Worker
