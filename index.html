@@ -909,26 +909,43 @@ function renderList() {
 // ══════════════════════════════════════════
 // STATS RENDER
 // ══════════════════════════════════════════
+
 function renderStats() {
+  const today = toISO(new Date());
   const total = reservations.length;
-  const active = reservations.filter(r=>r.status!=='cancelled').length;
-  const totalRevenue = reservations.filter(r=>r.status!=='cancelled').reduce((s,r)=>s+(r.total||0),0);
-  const paidRevenue  = reservations.filter(r=>r.status!=='cancelled').reduce((s,r)=>s+(r.paid||0),0);
+  const activeRes = reservations.filter(r => r.status !== 'cancelled');
+  const active = activeRes.length;
+
+  let ca = 0, encaisse = 0;
+  activeRes.forEach(r => {
+    const totalAmt = Number(r.total)||0;
+    const paidAmt = Number(r.paid)||0;
+    ca += totalAmt;
+    if (r.status === 'paid') encaisse += totalAmt;
+    else if (r.status === 'advance') encaisse += paidAmt;
+  });
+  const reste = Math.max(0, ca - encaisse);
+
+  const occupied = new Set(
+    activeRes.filter(r => r.from <= today && r.to > today).map(r => r.apt)
+  );
+  const libres = APT_IDS.length - occupied.size;
 
   let html = `<div class="stats-grid">
-    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Réservations</div></div>
-    <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Actives</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${totalRevenue}</div><div class="stat-lbl">CA</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--primary)">${paidRevenue}</div><div class="stat-lbl">Encaissé</div></div>
+    <div class="stat-card stat-premium stat-blue"><div class="stat-num">${total}</div><div class="stat-lbl">Total Réservations</div></div>
+    <div class="stat-card stat-premium stat-green"><div class="stat-num">${active}</div><div class="stat-lbl">Actives</div></div>
+    <div class="stat-card stat-premium stat-purple"><div class="stat-num">${ca}</div><div class="stat-lbl">CA (DT)</div></div>
+    <div class="stat-card stat-premium stat-blue"><div class="stat-num">${encaisse}</div><div class="stat-lbl">Encaissé (DT)</div></div>
+    <div class="stat-card stat-premium stat-red"><div class="stat-num">${reste}</div><div class="stat-lbl">Reste à encaisser</div></div>
+    <div class="stat-card stat-premium stat-gray"><div class="stat-num">${libres}</div><div class="stat-lbl">Libres aujourd’hui</div></div>
   </div>`;
 
-  // By status
   html += `<div class="stat-section-title">Par appartement</div>`;
   APT_IDS.forEach(aptId => {
-    const resas = reservations.filter(r=>r.apt===aptId && r.status!=='cancelled');
+    const resas = activeRes.filter(r => r.apt === aptId);
     if (!resas.length) return;
     const nights = resas.reduce((s,r)=>s+diffDays(r.from,r.to),0);
-    const amount = resas.reduce((s,r)=>s+(r.total||0),0);
+    const amount = resas.reduce((s,r)=>s+(Number(r.total)||0),0);
     html += `<div class="apt-stat-row">
       <div><div class="apt-stat-name">${aptId}</div><div class="apt-stat-details">${resas.length} résa · ${nights} nuits</div></div>
       <div class="apt-stat-amount">${amount} DT</div>
@@ -937,6 +954,7 @@ function renderStats() {
 
   document.getElementById('stats-scroll').innerHTML = html;
 }
+
 
 // ══════════════════════════════════════════
 // FORM
