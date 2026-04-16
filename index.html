@@ -324,9 +324,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <button onclick="goToday()" style="font-size:10px;padding:0 8px;width:auto">Auj.</button>
       </div>
       <div class="cal-view-btns">
-        <button class="cal-view-btn active" id="btn-7" onclick="setDays(7)">7j</button>
-        <button class="cal-view-btn" id="btn-14" onclick="setDays(14)">14j</button>
-        <button class="cal-view-btn" id="btn-30" onclick="setDays(30)">30j</button>
+        <button class="active">30j</button>
       </div>
     </div>
     <div class="cal-wrap" id="cal-wrap">
@@ -612,7 +610,7 @@ const STATUS_CSS_CLASS = { paid:'status-paid', advance:'status-advance', unpaid:
 let reservations = [];
 let aptConfig = {};  // { APT1: { price: 100, capacity: 4 }, ... }
 let calStartDate = new Date();
-let calDays = 7;
+let calDays = 30;
 let currentTab = 'cal';
 let editingResId = null;
 let statusTargetId = null;
