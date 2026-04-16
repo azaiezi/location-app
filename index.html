@@ -1636,6 +1636,7 @@ if ('serviceWorker' in navigator) {
 
 init();
 
+
 function getSavedClients(){
  const out=[], seen={};
  (reservations||[]).forEach(function(r){
@@ -1663,20 +1664,25 @@ function suggestClients(){
  var arr=getSavedClients().filter(function(c){
    return c.prenom.toLowerCase().indexOf(val)>-1 || c.nom.toLowerCase().indexOf(val)>-1;
  }).slice(0,5);
- box.innerHTML=arr.map(function(c){
-   return '<div class="client-item" onclick="selectClient('+JSON.stringify(c.prenom)+','+JSON.stringify(c.nom)+','+JSON.stringify(c.tel)+')">'+c.prenom+' '+c.nom+' - '+c.tel+'</div>';
- }).join('');
+ box.innerHTML='';
+ arr.forEach(function(c){
+   var div=document.createElement('div');
+   div.className='client-item';
+   div.textContent=c.prenom+' '+c.nom+' - '+c.tel;
+   div.onclick=function(){ selectClient(c.prenom,c.nom,c.tel); };
+   box.appendChild(div);
+ });
 }
 function selectClient(prenom,nom,tel){
  var a=document.getElementById('f-prenom'); if(a) a.value=prenom;
  var b=document.getElementById('f-nom'); if(b) b.value=nom;
  var c=document.getElementById('f-tel'); if(c) c.value=tel;
  var box=document.getElementById('client-suggestions'); if(box) box.innerHTML='';
+ var d=document.getElementById('f-from'); if(d) d.focus();
 }
 document.addEventListener('input',function(e){
  if(e.target && e.target.id==='f-prenom'){ suggestClients(); }
 });
-
 </script>
 </body>
 </html>
