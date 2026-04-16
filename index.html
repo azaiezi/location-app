@@ -272,6 +272,11 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 *{
   transition: background 0.2s, color 0.2s;
 }
+
+#client-suggestions{background:#fff;border:1px solid #ddd;border-radius:10px;margin-top:5px;max-height:180px;overflow:auto;position:relative;z-index:50}
+.client-item{padding:10px;cursor:pointer}
+.client-item:hover{background:#f1f5f9}
+
 </style>
 </head>
 <body>
@@ -304,7 +309,9 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <button onclick="goToday()" style="font-size:10px;padding:0 8px;width:auto">Auj.</button>
       </div>
       <div class="cal-view-btns">
-        <button class="active" onclick="setViewDays(30)">30j</button>
+        <button class="cal-view-btn active" id="btn-7" onclick="setDays(7)">7j</button>
+        <button class="cal-view-btn" id="btn-14" onclick="setDays(14)">14j</button>
+        <button class="cal-view-btn" id="btn-30" onclick="setDays(30)">30j</button>
       </div>
     </div>
     <div class="cal-wrap" id="cal-wrap">
@@ -590,7 +597,7 @@ const STATUS_CSS_CLASS = { paid:'status-paid', advance:'status-advance', unpaid:
 let reservations = [];
 let aptConfig = {};  // { APT1: { price: 100, capacity: 4 }, ... }
 let calStartDate = new Date();
-let calDays = 30;
+let calDays = 7;
 let currentTab = 'cal';
 let editingResId = null;
 let statusTargetId = null;
@@ -1628,6 +1635,48 @@ if ('serviceWorker' in navigator) {
 }
 
 init();
+
+function getSavedClients(){
+ const out=[], seen={};
+ (reservations||[]).forEach(function(r){
+   var p=r.prenom||'', n=r.nom||'', t=r.tel||'';
+   var k=p+'|'+n+'|'+t;
+   if((p||n) && !seen[k]){ seen[k]=1; out.push({prenom:p,nom:n,tel:t});}
+ });
+ return out;
+}
+function ensureSuggestBox(){
+ var box=document.getElementById('client-suggestions');
+ if(!box){
+   box=document.createElement('div');
+   box.id='client-suggestions';
+   var inp=document.getElementById('f-prenom');
+   if(inp && inp.parentNode) inp.parentNode.appendChild(box);
+ }
+ return box;
+}
+function suggestClients(){
+ var inp=document.getElementById('f-prenom');
+ var val=((inp&&inp.value)||'').toLowerCase();
+ var box=ensureSuggestBox();
+ if(val.length<2){ box.innerHTML=''; return; }
+ var arr=getSavedClients().filter(function(c){
+   return c.prenom.toLowerCase().indexOf(val)>-1 || c.nom.toLowerCase().indexOf(val)>-1;
+ }).slice(0,5);
+ box.innerHTML=arr.map(function(c){
+   return '<div class="client-item" onclick="selectClient('+JSON.stringify(c.prenom)+','+JSON.stringify(c.nom)+','+JSON.stringify(c.tel)+')">'+c.prenom+' '+c.nom+' - '+c.tel+'</div>';
+ }).join('');
+}
+function selectClient(prenom,nom,tel){
+ var a=document.getElementById('f-prenom'); if(a) a.value=prenom;
+ var b=document.getElementById('f-nom'); if(b) b.value=nom;
+ var c=document.getElementById('f-tel'); if(c) c.value=tel;
+ var box=document.getElementById('client-suggestions'); if(box) box.innerHTML='';
+}
+document.addEventListener('input',function(e){
+ if(e.target && e.target.id==='f-prenom'){ suggestClients(); }
+});
+
 </script>
 </body>
 </html>
