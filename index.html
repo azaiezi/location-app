@@ -277,6 +277,14 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .client-item{padding:10px;cursor:pointer}
 .client-item:hover{background:#f1f5f9}
 
+
+.stat-premium{border-radius:16px;padding:16px;color:#fff;font-weight:700}
+.stat-blue{background:#2563eb}
+.stat-green{background:#16a34a}
+.stat-gray{background:#64748b}
+.stat-purple{background:#7c3aed}
+.stat-red{background:#dc2626}
+
 </style>
 </head>
 <body>
@@ -321,7 +329,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
       <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div>Payé</div>
       <div class="leg-item"><div class="leg-dot" style="background:#b45309"></div>Avance versée</div>
       <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div>Non payé</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#4b5563"></div>Annulé</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#4b5563"></div></div>
     </div>
   </div>
 
@@ -337,7 +345,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <option value="unpaid">Non payé</option>
         <option value="advance">Avance</option>
         <option value="paid">Payé</option>
-        <option value="cancelled">Annulé</option>
+        <option value="cancelled"></option>
       </select>
     </div>
     <div class="list-scroll" id="list-scroll"></div>
@@ -399,7 +407,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
               <option value="unpaid">Non payé</option>
               <option value="advance">Avance versée</option>
               <option value="paid">Payé totalement</option>
-              <option value="cancelled">Annulé</option>
+              <option value="cancelled"></option>
             </select>
           </div>
         </div>
@@ -438,7 +446,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <div class="status-opt" onclick="setStatus('unpaid')"><div class="status-dot" style="background:var(--red)"></div>Non payé</div>
         <div class="status-opt" onclick="setStatus('advance')"><div class="status-dot" style="background:var(--yellow)"></div>Avance versée</div>
         <div class="status-opt" onclick="setStatus('paid')"><div class="status-dot" style="background:var(--green)"></div>Payé totalement</div>
-        <div class="status-opt" onclick="setStatus('cancelled')"><div class="status-dot" style="background:var(--gray)"></div>Annulé</div>
+        <div class="status-opt" onclick="setStatus('cancelled')"><div class="status-dot" style="background:var(--gray)"></div></div>
       </div>
     </div>
   </div>
@@ -588,7 +596,7 @@ const APT_IDS = ['APT1','APT2','APT3','APT4','APT5','APT6','APT7','APT8','APTA',
 
 const STATUS_COLOR = { paid:'#22c55e', advance:'#eab308', unpaid:'#ef4444', cancelled:'#6b7280' };
 const STATUS_CLASS = { paid:'badge-paid', advance:'badge-advance', unpaid:'badge-unpaid', cancelled:'badge-cancelled' };
-const STATUS_LABEL = { paid:'Payé', advance:'Avance', unpaid:'Non payé', cancelled:'Annulé' };
+const STATUS_LABEL = { paid:'Payé', advance:'Avance', unpaid:'Non payé', cancelled:'' };
 const STATUS_CSS_CLASS = { paid:'status-paid', advance:'status-advance', unpaid:'status-unpaid', cancelled:'status-cancelled' };
 
 // ══════════════════════════════════════════
@@ -903,9 +911,9 @@ function renderStats() {
   const paidRevenue  = reservations.filter(r=>r.status!=='cancelled').reduce((s,r)=>s+(r.paid||0),0);
 
   let html = `<div class="stats-grid">
-    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total réservations</div></div>
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total Réservations</div></div>
     <div class="stat-card"><div class="stat-num">${active}</div><div class="stat-lbl">Actives</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${totalRevenue}</div><div class="stat-lbl">CA total (DT)</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${totalRevenue}</div><div class="stat-lbl">CA (DT)</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--primary)">${paidRevenue}</div><div class="stat-lbl">Encaissé (DT)</div></div>
   </div>`;
 
