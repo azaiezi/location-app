@@ -1010,7 +1010,8 @@ function openForm(id, preApt, preDate) {
     document.getElementById('f-notes').value='';
     document.getElementById('f-calc').textContent='Sélectionnez un appartement et des dates';
   }
-  document.getElementById('modal-form').classList.add('show');
+syncPaymentStatus();
+document.getElementById('modal-form').classList.add('show');
 }
 
 function openEdit(id) { openForm(id); }
