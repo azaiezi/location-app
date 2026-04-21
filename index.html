@@ -1107,9 +1107,13 @@ function syncPaymentStatus() {
   let total = parseFloat(totalInput.value) || 0;
 
   if (status === 'paid') {
-    paidInput.value = total;
-    paidInput.readOnly = true;
-  }
+
+  const finalTotal =
+    parseFloat(document.getElementById('f-final').value) || total;
+
+  paidInput.value = finalTotal;
+  paidInput.readOnly = true;
+}
 
   else if (status === 'unpaid') {
     paidInput.value = 0;
