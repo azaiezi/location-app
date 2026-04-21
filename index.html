@@ -1083,43 +1083,61 @@ function syncPaymentStatus() {
     paidInput.readOnly = true;
   }
 }
-function saveReservation() {
+
+  function saveReservation() {
   const prenom = document.getElementById('f-prenom').value.trim();
   const nom    = document.getElementById('f-nom').value.trim();
   const from   = document.getElementById('f-from').value;
   const to     = document.getElementById('f-to').value;
   const apt    = document.getElementById('f-apt').value;
+
   const conflicts = hasConflict(apt, from, to, editingResId);
 
-if (conflicts.length > 0) {
-  toast("❌ Conflit de réservation ! Impossible d'enregistrer", "err");
+  if (conflicts.length > 0) {
+    toast("❌ Conflit de réservation !", "err");
+    return;
+  }
 
-  document.getElementById('conflict-warning').style.display = 'block';
-  document.getElementById('conflict-warning').textContent =
-    "⚠️ Conflit détecté : réservation existante sur ces dates";
+  if (!prenom || !nom) {
+    toast("Prénom et nom requis", "err");
+    return;
+  }
 
-  return; // 🔴 BLOQUE ENREGISTREMENT
-}
-  if (!prenom||!nom) { toast('Prénom et nom requis','err'); return; }
-  if (!from||!to||from>=to) { toast('Dates invalides','err'); return; }
-  if (!apt) { toast('Appartement requis','err'); return; }
+  if (!from || !to || from >= to) {
+    toast("Dates invalides", "err");
+    return;
+  }
+
+  const status = document.getElementById('f-status').value;
+
+  let total = parseFloat(document.getElementById('f-total').value) || 0;
+  let paid  = parseFloat(document.getElementById('f-paid').value) || 0;
+
+  if (status === 'paid') paid = total;
+  if (status === 'unpaid') paid = 0;
+  if (status === 'cancelled') paid = 0;
+  if (paid > total) paid = total;
 
   const id = editingResId || Date.now().toString();
+
   const r = {
-    id, prenom, nom,
-    tel:     document.getElementById('f-tel').value.trim(),
+    id,
+    prenom,
+    nom,
+    tel: document.getElementById('f-tel').value.trim(),
     apt,
-    from, to,
-    persons: parseInt(document.getElementById('f-persons').value)||1,
-    status:  document.getElementById('f-status').value,
-    total:   parseFloat(document.getElementById('f-total').value)||0,
-    paid:    parseFloat(document.getElementById('f-paid').value)||0,
-    notes:   document.getElementById('f-notes').value.trim(),
+    from,
+    to,
+    persons: parseInt(document.getElementById('f-persons').value) || 1,
+    status,
+    total,
+    paid,
+    notes: document.getElementById('f-notes').value.trim()
   };
 
   if (editingResId) {
-    const idx = reservations.findIndex(x=>x.id===editingResId);
-    if (idx>=0) reservations[idx] = r;
+    const idx = reservations.findIndex(x => x.id === editingResId);
+    if (idx >= 0) reservations[idx] = r;
   } else {
     reservations.push(r);
   }
@@ -1127,9 +1145,9 @@ if (conflicts.length > 0) {
   saveData();
   closeForm();
   refreshAll();
-  toast(editingResId?'Réservation modifiée ✓':'Réservation ajoutée ✓','ok');
-}
 
+  toast(editingResId ? "Réservation modifiée ✓" : "Réservation ajoutée ✓", "ok");
+}
 // ══════════════════════════════════════════
 // STATUS CHANGE
 // ══════════════════════════════════════════
