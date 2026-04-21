@@ -989,42 +989,64 @@ function renderStats() {
 // ══════════════════════════════════════════
 function openForm(id, preApt, preDate) {
   editingResId = id || null;
-  document.getElementById('form-title').textContent = id ? 'Modifier réservation' : 'Nouvelle réservation';
+
+  document.getElementById('form-title').textContent =
+    id ? 'Modifier réservation' : 'Nouvelle réservation';
+
   document.getElementById('conflict-warning').style.display = 'none';
 
   if (id) {
-    const r = reservations.find(x=>x.id===id);
+    const r = reservations.find(x => x.id === id);
     if (!r) return;
-    document.getElementById('f-id').value     = r.id;
-    document.getElementById('f-prenom').value = r.prenom||'';
-    document.getElementById('f-nom').value    = r.nom||'';
-    document.getElementById('f-tel').value    = r.tel||'';
-    document.getElementById('f-apt').value    = r.apt||'';
-    document.getElementById('f-from').value   = r.from||'';
-    document.getElementById('f-to').value     = r.to||'';
-    document.getElementById('f-persons').value= r.persons||2;
-    document.getElementById('f-status').value = r.status||'unpaid';
-    document.getElementById('f-total').value  = r.total||0;
-    document.getElementById('f-paid').value   = r.paid||0;
-    document.getElementById('f-notes').value  = r.notes||'';
+
+    document.getElementById('f-id').value      = r.id;
+    document.getElementById('f-prenom').value  = r.prenom || '';
+    document.getElementById('f-nom').value     = r.nom || '';
+    document.getElementById('f-tel').value     = r.tel || '';
+    document.getElementById('f-apt').value     = r.apt || '';
+    document.getElementById('f-from').value    = r.from || '';
+    document.getElementById('f-to').value      = r.to || '';
+    document.getElementById('f-persons').value = r.persons || 2;
+    document.getElementById('f-status').value  = r.status || 'unpaid';
+
+    document.getElementById('f-total').value   = r.total || 0;
+    document.getElementById('f-paid').value    = r.paid || 0;
+
+    document.getElementById('f-discount').value = r.discount || 0;
+    document.getElementById('f-final').value    = r.total || 0;
+
+    document.getElementById('f-notes').value   = r.notes || '';
+
     calcTotal();
+
   } else {
-    document.getElementById('f-id').value='';
-    document.getElementById('f-prenom').value='';
-    document.getElementById('f-nom').value='';
-    document.getElementById('f-tel').value='';
-    document.getElementById('f-apt').value=preApt||APT_IDS[0];
-    document.getElementById('f-from').value=preDate||'';
-    document.getElementById('f-to').value='';
-    document.getElementById('f-persons').value=2;
-    document.getElementById('f-status').value='unpaid';
-    document.getElementById('f-total').value='';
-    document.getElementById('f-paid').value='';
-    document.getElementById('f-notes').value='';
-    document.getElementById('f-calc').textContent='Sélectionnez un appartement et des dates';
+
+    document.getElementById('f-id').value = '';
+    document.getElementById('f-prenom').value = '';
+    document.getElementById('f-nom').value = '';
+    document.getElementById('f-tel').value = '';
+
+    document.getElementById('f-apt').value = preApt || APT_IDS[0];
+    document.getElementById('f-from').value = preDate || '';
+    document.getElementById('f-to').value = '';
+
+    document.getElementById('f-persons').value = 2;
+    document.getElementById('f-status').value = 'unpaid';
+
+    document.getElementById('f-total').value = '';
+    document.getElementById('f-paid').value = '';
+
+    document.getElementById('f-discount').value = 0;
+    document.getElementById('f-final').value = '';
+
+    document.getElementById('f-notes').value = '';
+
+    document.getElementById('f-calc').textContent =
+      'Sélectionnez un appartement et des dates';
   }
-syncPaymentStatus();
-document.getElementById('modal-form').classList.add('show');
+
+  syncPaymentStatus();
+  document.getElementById('modal-form').classList.add('show');
 }
 
 function openEdit(id) { openForm(id); }
@@ -1044,6 +1066,12 @@ function calcTotal() {
     const nights = diffDays(from, to);
     const price  = (aptConfig[aptId]||{}).price || 0;
     const auto   = nights * price;
+
+    const remise = parseFloat(document.getElementById('f-discount').value) || 0;
+const finalTotal = Math.max(0, auto - remise);
+
+document.getElementById('f-total').value = auto;
+document.getElementById('f-final').value = finalTotal;
     document.getElementById('f-calc').textContent =
       `${nights} nuit(s) × ${price} DT = ${auto} DT`;
     if (!document.getElementById('f-total').value || document.getElementById('f-total').dataset.auto === '1') {
@@ -1135,6 +1163,7 @@ function syncPaymentStatus() {
   const id = editingResId || Date.now().toString();
 
   const r = {
+    discount: parseFloat(document.getElementById('f-discount').value) || 0,
     id,
     prenom,
     nom,
@@ -1144,9 +1173,10 @@ function syncPaymentStatus() {
     to,
     persons: parseInt(document.getElementById('f-persons').value) || 1,
     status,
-    total,
+    total: parseFloat(document.getElementById('f-final').value) || total,
     paid,
     notes: document.getElementById('f-notes').value.trim()
+    
   };
 
   if (editingResId) {
