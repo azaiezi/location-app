@@ -1845,6 +1845,79 @@ function searchAvailability(){
  html += '<div style="margin:6px 0"><strong>🔴 Occupés:</strong> '+(busy.length?busy.join(', '):'Aucun')+'</div>';
  out.innerHTML=html;
 }
+  // ══════════════════════════════════════════
+// NOUVELLE FONCTION : STATISTIQUES PAR PERIODE
+// ══════════════════════════════════════════
+function renderPeriodStats() {
+  const from = document.getElementById('stat-period-from').value;
+  const to = document.getElementById('stat-period-to').value;
+  const out = document.getElementById('period-stats-results');
+  
+  if (!from || !to || from > to) {
+    out.innerHTML = '<div class="form-info" style="color:var(--red);background:rgba(239,68,68,.12);border-color:var(--red)">Veuillez choisir des dates valides.</div>';
+    return;
+  }
+  
+  let totalPeriod = 0;
+  let aptStats = {};
+  
+  // Initialiser les compteurs pour tous les appartements
+  APT_IDS.forEach(apt => {
+    aptStats[apt] = 0;
+  });
+  
+  // Filtrer les réservations qui se chevauchent avec la période sélectionnée
+  // et exclure les annulations
+  const validRes = reservations.filter(r => {
+    return r.status !== 'cancelled' && r.from <= to && r.to >= from;
+  });
+  
+  // Calculer les totaux
+  validRes.forEach(r => {
+    // Si la réservation dépasse de la période, on prend quand même le montant total payé
+    // (ou r.final selon votre logique métier. J'utilise ici r.final comme dans votre form)
+    let amount = parseFloat(r.final) || 0; 
+    totalPeriod += amount;
+    
+    if (aptStats[r.apt] !== undefined) {
+      aptStats[r.apt] += amount;
+    }
+  });
+  
+  // Générer le HTML des résultats
+  let html = `
+    <div class="stat-card stat-premium stat-blue" style="margin-bottom:16px;">
+      <div style="font-size:12px; opacity:0.9">Total sur la période sélectionnée</div>
+      <div style="font-size:22px; font-weight:700; margin-top:4px;">${totalPeriod.toFixed(2)} DT</div>
+      <div style="font-size:11px; margin-top:4px; opacity:0.8">Du ${from} au ${to}</div>
+    </div>
+    
+    <div class="settings-section-title">Détail par appartement</div>
+  `;
+  
+  let hasAptSales = false;
+  
+  APT_IDS.forEach(apt => {
+    if (aptStats[apt] > 0) {
+      hasAptSales = true;
+      html += `
+        <div class="apt-stat-row">
+          <div class="apt-stat-name">${apt}</div>
+          <div class="apt-stat-amount">${aptStats[apt].toFixed(2)} DT</div>
+        </div>
+      `;
+    }
+  });
+  
+  if (!hasAptSales) {
+    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0;">Aucune recette enregistrée pour cette période.</div>`;
+  }
+  
+  // Séparateur visuel avec les statistiques globales d'en dessous
+  html += `<hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">`;
+  
+  out.innerHTML = html;
+}
 
 </script>
   <script>
