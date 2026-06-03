@@ -1865,13 +1865,13 @@ function searchAvailability(){
  html += '<div style="margin:6px 0"><strong>🔴 Occupés:</strong> '+(busy.length?busy.join(', '):'Aucun')+'</div>';
  out.innerHTML=html;
 }
-
-  // ══════════════════════════════════════════
-// FONCTION DE CALCUL PAR PÉRIODE (AUTO-ADAPTATIVE)
+// ══════════════════════════════════════════
+// FONCTION DE CALCUL : PÉRIODE & APPARTEMENT
 // ══════════════════════════════════════════
 function renderPeriodStats() {
-  const from = document.getElementById('stat-period-from').value; // Format YYYY-MM-DD
-  const to = document.getElementById('stat-period-to').value;     // Format YYYY-MM-DD
+  const from = document.getElementById('stat-period-from').value;
+  const to = document.getElementById('stat-period-to').value;
+  const selectedApt = document.getElementById('stat-period-apt').value; // Récupère l'appartement choisi
   const out = document.getElementById('period-stats-results');
   
   if (!from || !to || from > to) {
@@ -1879,22 +1879,20 @@ function renderPeriodStats() {
     return;
   }
   
-  // Fonction interne pour standardiser n'importe quel format de date en YYYY-MM-DD
   function normalizeDate(d) {
     if (!d) return '';
     if (d instanceof Date) return d.toISOString().split('T')[0];
     if (typeof d === 'number') return new Date(d).toISOString().split('T')[0];
     if (typeof d === 'string') {
-      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0, 10); // Déjà YYYY-MM-DD
-      if (/^\d{2}\/\d{2}\/\d{4}/.test(d)) { // Format DD/MM/YYYY
+      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0, 10);
+      if (/^\d{2}\/\d{2}\/\d{4}/.test(d)) {
         const p = d.split('/');
-        return `${p[2]}-${p[1]}-${p[p.length-3]}`;
+        return `${p[2]}-${p[1]}-${p[0]}`;
       }
     }
     return String(d);
   }
 
-  // Détection automatique des clés utilisées dans votre objet Réservation
   let keyFrom = 'from', keyTo = 'to', keyApt = 'apt';
   if (reservations && reservations.length > 0) {
     const testObj = reservations[0];
@@ -1907,48 +1905,51 @@ function renderPeriodStats() {
   let totalPeriod = 0;
   let aptStats = {};
   
-  // Initialisation sécurisée de tous vos appartements
   APT_IDS.forEach(apt => { aptStats[apt] = 0; });
   
-  // Filtrage et calcul
   reservations.forEach(r => {
-    // Éviter les annulations (gère r.status et r['f-status'])
     const status = r.status || r['f-status'] || '';
     if (status === 'cancelled' || status === 'Annulé') return;
 
-    // Normalisation des dates de la réservation courante
+    const rApt = r[keyApt] || '';
+    
+    // FILTRE APPARTEMENT : Si un appart est coché et qu'il ne correspond pas, on l'ignore
+    if (selectedApt && rApt !== selectedApt) return;
+
     const rFrom = normalizeDate(r[keyFrom]);
     const rTo = normalizeDate(r[keyTo]);
-    const rApt = r[keyApt] || '';
 
-    // Vérification du chevauchement avec la période sélectionnée
     if (rFrom && rTo && rFrom <= to && rTo >= from) {
-      // Extraction magique du montant (teste toutes vos variables possibles : final, total, paid...)
       let amount = parseFloat(r['f-final']) || parseFloat(r.final) || 
                    parseFloat(r['f-total']) || parseFloat(r.total) || 
                    parseFloat(r['f-paid'])  || parseFloat(r.paid) || 0;
       
       totalPeriod += amount;
-      
       if (aptStats[rApt] !== undefined) {
         aptStats[rApt] += amount;
       }
     }
   });
   
-  // Génération de l'affichage HTML mis à jour
+  // Titre de l'encadré dynamique selon le filtre
+  const labelApt = selectedApt ? `Appartement ${selectedApt}` : "Tous les appartements";
+
   let html = `
     <div class="stat-card stat-premium stat-blue" style="margin-bottom:16px;">
-      <div style="font-size:12px; opacity:0.9">Total sur la période sélectionnée</div>
+      <div style="font-size:12px; opacity:0.9">Total Période — ${labelApt}</div>
       <div style="font-size:22px; font-weight:700; margin-top:4px;">${totalPeriod.toFixed(2)} DT</div>
       <div style="font-size:11px; margin-top:4px; opacity:0.8">Du ${from} au ${to}</div>
     </div>
     
-    <div class="settings-section-title">Détail par appartement</div>
+    <div class="settings-section-title">Détail des recettes</div>
   `;
   
   let hasAptSales = false;
-  APT_IDS.forEach(apt => {
+  
+  // Si un appartement précis est choisi, on n'affiche que lui, sinon on affiche toute la liste
+  const aptsToRender = selectedApt ? [selectedApt] : APT_IDS;
+  
+  aptsToRender.forEach(apt => {
     if (aptStats[apt] > 0) {
       hasAptSales = true;
       html += `
@@ -1961,7 +1962,7 @@ function renderPeriodStats() {
   });
   
   if (!hasAptSales) {
-    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0;">Aucune recette enregistrée pour cette période.</div>`;
+    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0;">Aucune recette sur cette sélection.</div>`;
   }
   
   html += `<hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">`;
