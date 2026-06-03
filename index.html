@@ -1845,99 +1845,106 @@ function searchAvailability(){
  html += '<div style="margin:6px 0"><strong>🔴 Occupés:</strong> '+(busy.length?busy.join(', '):'Aucun')+'</div>';
  out.innerHTML=html;
 }
-  // ══════════════════════════════════════════
-// NOUVELLE FONCTION : STATISTIQUES PAR PERIODE
-// ══════════════════════════════════════════
 
+  // ══════════════════════════════════════════
+// FONCTION DE CALCUL PAR PÉRIODE (AUTO-ADAPTATIVE)
+// ══════════════════════════════════════════
 function renderPeriodStats() {
-  const from = document.getElementById('stat-period-from').value;
-  const to = document.getElementById('stat-period-to').value;
+  const from = document.getElementById('stat-period-from').value; // Format YYYY-MM-DD
+  const to = document.getElementById('stat-period-to').value;     // Format YYYY-MM-DD
   const out = document.getElementById('period-stats-results');
   
   if (!from || !to || from > to) {
-    out.innerHTML = '<div class="form-info" style="color:var(--red);background:rgba(239,68,68,.12);border-color:var(--red);margin-bottom:15px;">Veuillez choisir des dates valides.</div>';
+    out.innerHTML = '<div class="form-info" style="color:var(--red);background:rgba(239,68,68,.12);border-color:var(--red)">Veuillez choisir des dates valides.</div>';
     return;
   }
   
-  let globalTotalFinal = 0; // Somme des totaux finals
-  let globalTotalPaid = 0;  // Somme des montants payés (encaissés)
-  
-  let aptStatsFinal = {};
-  let aptStatsPaid = {};
-  
-  // Initialisation pour chaque appartement
-  APT_IDS.forEach(apt => {
-    aptStatsFinal[apt] = 0;
-    aptStatsPaid[apt] = 0;
-  });
-  
-  // FILTRAGE DES RÉSERVATIONS
-  // Option A (Actuelle) : Toutes les réservations qui touchent ou traversent la période
-  const validRes = reservations.filter(r => {
-    return r.status !== 'cancelled' && r.from <= to && r.to >= from;
-  });
+  // Fonction interne pour standardiser n'importe quel format de date en YYYY-MM-DD
+  function normalizeDate(d) {
+    if (!d) return '';
+    if (d instanceof Date) return d.toISOString().split('T')[0];
+    if (typeof d === 'number') return new Date(d).toISOString().split('T')[0];
+    if (typeof d === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0, 10); // Déjà YYYY-MM-DD
+      if (/^\d{2}\/\d{2}\/\d{4}/.test(d)) { // Format DD/MM/YYYY
+        const p = d.split('/');
+        return `${p[2]}-${p[1]}-${p[p.length-3]}`;
+      }
+    }
+    return String(d);
+  }
 
-  /* Note alternative (Option B) : Si vous voulez UNIQUEMENT les réservations dont 
-  la date d'ARRIVÉE est dans la période, remplacez la ligne ci-dessus par :
-  const validRes = reservations.filter(r => r.status !== 'cancelled' && r.from >= from && r.from <= to);
-  */
+  // Détection automatique des clés utilisées dans votre objet Réservation
+  let keyFrom = 'from', keyTo = 'to', keyApt = 'apt';
+  if (reservations && reservations.length > 0) {
+    const testObj = reservations[0];
+    if ('f-from' in testObj) keyFrom = 'f-from';
+    if ('f-to' in testObj) keyTo = 'f-to';
+    if ('f-apt' in testObj) keyApt = 'f-apt';
+    else if ('appartement' in testObj) keyApt = 'appartement';
+  }
+
+  let totalPeriod = 0;
+  let aptStats = {};
   
-  // CALCULS NUMÉRIQUES SÉCURISÉS
-  validRes.forEach(r => {
-    // On va chercher toutes les variables possibles pour éviter les erreurs de nommage
-    let finalPrice = parseFloat(r.final) || parseFloat(r.total) || 0;
-    let paidPrice = parseFloat(r.paid) || 0;
-    
-    globalTotalFinal += finalPrice;
-    globalTotalPaid += paidPrice;
-    
-    if (aptStatsFinal[r.apt] !== undefined) {
-      aptStatsFinal[r.apt] += finalPrice;
-      aptStatsPaid[r.apt] += paidPrice;
+  // Initialisation sécurisée de tous vos appartements
+  APT_IDS.forEach(apt => { aptStats[apt] = 0; });
+  
+  // Filtrage et calcul
+  reservations.forEach(r => {
+    // Éviter les annulations (gère r.status et r['f-status'])
+    const status = r.status || r['f-status'] || '';
+    if (status === 'cancelled' || status === 'Annulé') return;
+
+    // Normalisation des dates de la réservation courante
+    const rFrom = normalizeDate(r[keyFrom]);
+    const rTo = normalizeDate(r[keyTo]);
+    const rApt = r[keyApt] || '';
+
+    // Vérification du chevauchement avec la période sélectionnée
+    if (rFrom && rTo && rFrom <= to && rTo >= from) {
+      // Extraction magique du montant (teste toutes vos variables possibles : final, total, paid...)
+      let amount = parseFloat(r['f-final']) || parseFloat(r.final) || 
+                   parseFloat(r['f-total']) || parseFloat(r.total) || 
+                   parseFloat(r['f-paid'])  || parseFloat(r.paid) || 0;
+      
+      totalPeriod += amount;
+      
+      if (aptStats[rApt] !== undefined) {
+        aptStats[rApt] += amount;
+      }
     }
   });
   
-  // INTERFACE GRAPHIQUE DES RÉSULTATS
+  // Génération de l'affichage HTML mis à jour
   let html = `
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px;">
-      <div class="stat-card stat-premium c1" style="padding:12px;">
-        <div style="font-size:11px; opacity:0.8;">Total Final (Contrats)</div>
-        <div style="font-size:18px; font-weight:700; margin-top:4px;">${globalTotalFinal.toFixed(2)} DT</div>
-      </div>
-      <div class="stat-card stat-premium c2" style="padding:12px;">
-        <div style="font-size:11px; opacity:0.8;">Total Encaissé (Payé)</div>
-        <div style="font-size:18px; font-weight:700; margin-top:4px;">${globalTotalPaid.toFixed(2)} DT</div>
-      </div>
+    <div class="stat-card stat-premium stat-blue" style="margin-bottom:16px;">
+      <div style="font-size:12px; opacity:0.9">Total sur la période sélectionnée</div>
+      <div style="font-size:22px; font-weight:700; margin-top:4px;">${totalPeriod.toFixed(2)} DT</div>
+      <div style="font-size:11px; margin-top:4px; opacity:0.8">Du ${from} au ${to}</div>
     </div>
     
-    <div class="settings-section-title" style="margin-top:10px;">Détail par appartement sur la période</div>
+    <div class="settings-section-title">Détail par appartement</div>
   `;
   
-  let hasData = false;
-  
+  let hasAptSales = false;
   APT_IDS.forEach(apt => {
-    if (aptStatsFinal[apt] > 0 || aptStatsPaid[apt] > 0) {
-      hasData = true;
+    if (aptStats[apt] > 0) {
+      hasAptSales = true;
       html += `
-        <div class="apt-stat-row" style="margin-bottom:8px; padding:8px 12px;">
-          <div>
-            <div class="apt-stat-name">${apt}</div>
-            <div style="font-size:11px; color:var(--text3);">Encaissé: ${aptStatsPaid[apt].toFixed(2)} DT</div>
-          </div>
-          <div class="apt-stat-amount" style="font-size:13px; color:var(--primary); text-align:right;">
-            ${aptStatsFinal[apt].toFixed(2)} DT (Total)
-          </div>
+        <div class="apt-stat-row">
+          <div class="apt-stat-name">${apt}</div>
+          <div class="apt-stat-amount">${aptStats[apt].toFixed(2)} DT</div>
         </div>
       `;
     }
   });
   
-  if (!hasData) {
-    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0;">Aucune activité sur cette période.</div>`;
+  if (!hasAptSales) {
+    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0;">Aucune recette enregistrée pour cette période.</div>`;
   }
   
   html += `<hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">`;
-  
   out.innerHTML = html;
 }
 </script>
