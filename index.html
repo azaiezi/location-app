@@ -12,7 +12,7 @@
 <style>
 :root{
   --bg:#f8fafc;
-  --bg2:#ffffff;
+  --bg2:#ffffff;<div class="screen" id="screen-stats">
   --bg3:#e2e8f0;
   --bg4:#cbd5e1;
 
@@ -372,7 +372,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
   </div>
 
   <!-- ═══ STATS SCREEN ═══ -->
-  <div class="screen" id="screen-stats">
+ <div class="screen" id="screen-stats">
     <div style="padding:16px 16px 0; background:var(--bg); border-bottom:1px solid var(--border); flex-shrink:0;">
       <div style="font-size:13px; font-weight:600; color:var(--text2); margin-bottom:8px;">Statistiques par période & appartement</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
@@ -382,22 +382,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
       <div style="display:flex; gap:8px; margin-bottom:10px;">
         <select class="form-control" id="stat-period-apt" style="flex:1;">
           <option value="">Tous les appartements</option>
-          <option value="APT1">APT1</option>
-          <option value="APT2">APT2</option>
-          <option value="APT3">APT3</option>
-          <option value="APT4">APT4</option>
-          <option value="APT5">APT5</option>
-          <option value="APT6">APT6</option>
-          <option value="APT7">APT7</option>
-          <option value="APT8">APT8</option>
-          <option value="APTA">APTA</option>
-          <option value="APTB">APTB</option>
-          <option value="APTC">APTC</option>
-          <option value="APTD">APTD</option>
-          <option value="APTE">APTE</option>
-          <option value="APTF">APTF</option>
-          <option value="APTG">APTG</option>
-        </select>
+          </select>
         <button class="btn-save" style="padding:10px 16px;" onclick="renderPeriodStats()">📊 Filtrer</button>
       </div>
     </div>
@@ -406,7 +391,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 
     <div class="stats-scroll" id="stats-scroll"></div>
   </div>
-
   <!-- FAB -->
   <button class="fab" onclick="openForm()" id="fab">＋</button>
 
@@ -1866,103 +1850,116 @@ function searchAvailability(){
  out.innerHTML=html;
 }
 // ══════════════════════════════════════════
-// FONCTION DE CALCUL : PÉRIODE & APPARTEMENT
+// FONCTION CORRIGÉE : CHIFFRE VS ENCAISSÉ & FILTRE
 // ══════════════════════════════════════════
 function renderPeriodStats() {
   const from = document.getElementById('stat-period-from').value;
   const to = document.getElementById('stat-period-to').value;
-  const selectedApt = document.getElementById('stat-period-apt').value; // Récupère l'appartement choisi
+  const selectApt = document.getElementById('stat-period-apt');
   const out = document.getElementById('period-stats-results');
   
   if (!from || !to || from > to) {
-    out.innerHTML = '<div class="form-info" style="color:var(--red);background:rgba(239,68,68,.12);border-color:var(--red)">Veuillez choisir des dates valides.</div>';
+    out.innerHTML = '<div class="form-info" style="color:var(--red);background:rgba(239,68,68,.12);border-color:var(--red);margin-bottom:15px;padding:10px;border-radius:8px;">Veuillez choisir des dates valides.</div>';
     return;
   }
-  
-  function normalizeDate(d) {
-    if (!d) return '';
-    if (d instanceof Date) return d.toISOString().split('T')[0];
-    if (typeof d === 'number') return new Date(d).toISOString().split('T')[0];
-    if (typeof d === 'string') {
-      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0, 10);
-      if (/^\d{2}\/\d{2}\/\d{4}/.test(d)) {
-        const p = d.split('/');
-        return `${p[2]}-${p[1]}-${p[0]}`;
-      }
-    }
-    return String(d);
+
+  // Remplissage dynamique initial du sélecteur d'appartements pour éviter les fautes de frappe
+  if (selectApt && selectApt.options.length <= 1) {
+    const currentVal = selectApt.value;
+    selectApt.innerHTML = '<option value="">Tous les appartements</option>';
+    APT_IDS.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      selectApt.appendChild(opt);
+    });
+    selectApt.value = currentVal;
   }
 
-  let keyFrom = 'from', keyTo = 'to', keyApt = 'apt';
-  if (reservations && reservations.length > 0) {
-    const testObj = reservations[0];
-    if ('f-from' in testObj) keyFrom = 'f-from';
-    if ('f-to' in testObj) keyTo = 'f-to';
-    if ('f-apt' in testObj) keyApt = 'f-apt';
-    else if ('appartement' in testObj) keyApt = 'appartement';
-  }
+  const selectedApt = selectApt ? selectApt.value : "";
 
-  let totalPeriod = 0;
-  let aptStats = {};
+  let globalTotalFinal = 0; // Somme des r.total (Chiffre d'affaires)
+  let globalTotalPaid = 0;  // Somme des r.paid (Montant Encaissé)
   
-  APT_IDS.forEach(apt => { aptStats[apt] = 0; });
+  let aptStatsFinal = {};
+  let aptStatsPaid = {};
   
+  // Initialisation des structures pour chaque appartement
+  APT_IDS.forEach(apt => {
+    aptStatsFinal[apt] = 0;
+    aptStatsPaid[apt] = 0;
+  });
+  
+  // Filtrage chirurgical basé sur les clés réelles de votre application
   reservations.forEach(r => {
-    const status = r.status || r['f-status'] || '';
-    if (status === 'cancelled' || status === 'Annulé') return;
-
-    const rApt = r[keyApt] || '';
+    // Exclure les annulations
+    if (r.status === 'cancelled' || r.status === 'Annulé') return;
     
-    // FILTRE APPARTEMENT : Si un appart est coché et qu'il ne correspond pas, on l'ignore
-    if (selectedApt && rApt !== selectedApt) return;
-
-    const rFrom = normalizeDate(r[keyFrom]);
-    const rTo = normalizeDate(r[keyTo]);
-
-    if (rFrom && rTo && rFrom <= to && rTo >= from) {
-      let amount = parseFloat(r['f-final']) || parseFloat(r.final) || 
-                   parseFloat(r['f-total']) || parseFloat(r.total) || 
-                   parseFloat(r['f-paid'])  || parseFloat(r.paid) || 0;
+    // Filtre strict par appartement si sélectionné
+    if (selectedApt && r.apt !== selectedApt) return;
+    
+    // Vérification du chevauchement des dates
+    if (r.from && r.to && r.from <= to && r.to >= from) {
+      let finalPrice = parseFloat(r.total) || 0;
+      let paidPrice = parseFloat(r.paid) || 0;
       
-      totalPeriod += amount;
-      if (aptStats[rApt] !== undefined) {
-        aptStats[rApt] += amount;
+      globalTotalFinal += finalPrice;
+      globalTotalPaid += paidPrice;
+      
+      if (aptStatsFinal[r.apt] !== undefined) {
+        aptStatsFinal[r.apt] += finalPrice;
+        aptStatsPaid[r.apt] += paidPrice;
       }
     }
   });
   
-  // Titre de l'encadré dynamique selon le filtre
   const labelApt = selectedApt ? `Appartement ${selectedApt}` : "Tous les appartements";
-
+  
+  // Génération de l'interface graphique des indicateurs financiers
   let html = `
-    <div class="stat-card stat-premium stat-blue" style="margin-bottom:16px;">
-      <div style="font-size:12px; opacity:0.9">Total Période — ${labelApt}</div>
-      <div style="font-size:22px; font-weight:700; margin-top:4px;">${totalPeriod.toFixed(2)} DT</div>
-      <div style="font-size:11px; margin-top:4px; opacity:0.8">Du ${from} au ${to}</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div style="background: linear-gradient(135deg, #0071c2, #005999); color: white; padding: 14px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="font-size:11px; opacity:0.85; text-transform: uppercase; font-weight:600;">Chiffre d'Affaires</div>
+        <div style="font-size:19px; font-weight:700; margin-top:4px;">${globalTotalFinal.toFixed(2)} DT</div>
+        <div style="font-size:10px; opacity:0.7; margin-top:2px;">Contrats engagés</div>
+      </div>
+      <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 14px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <div style="font-size:11px; opacity:0.85; text-transform: uppercase; font-weight:600;">Total Encaissé</div>
+        <div style="font-size:19px; font-weight:700; margin-top:4px;">${globalTotalPaid.toFixed(2)} DT</div>
+        <div style="font-size:10px; opacity:0.7; margin-top:2px;">Sommes perçues</div>
+      </div>
     </div>
     
-    <div class="settings-section-title">Détail des recettes</div>
+    <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:12px; border-left:4px solid var(--primary); padding-left:8px;">
+      Détail financier — ${labelApt}
+    </div>
   `;
   
-  let hasAptSales = false;
-  
-  // Si un appartement précis est choisi, on n'affiche que lui, sinon on affiche toute la liste
+  let hasData = false;
   const aptsToRender = selectedApt ? [selectedApt] : APT_IDS;
   
   aptsToRender.forEach(apt => {
-    if (aptStats[apt] > 0) {
-      hasAptSales = true;
+    if (aptStatsFinal[apt] > 0 || aptStatsPaid[apt] > 0) {
+      hasData = true;
       html += `
-        <div class="apt-stat-row">
-          <div class="apt-stat-name">${apt}</div>
-          <div class="apt-stat-amount">${aptStats[apt].toFixed(2)} DT</div>
+        <div class="apt-stat-row" style="background: var(--bg2); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="flex:1;">
+            <div style="font-weight:700; color:var(--text); font-size:14px;">${apt}</div>
+            <div style="font-size:12px; color:#10b981; font-weight:600; margin-top:3px;">
+              🟢 Encaissé : ${aptStatsPaid[apt].toFixed(2)} DT
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px; color:var(--text3); font-weight:600;">Chiffre Total</div>
+            <div style="font-size:15px; font-weight:700; color:var(--primary); margin-top:2px;">${aptStatsFinal[apt].toFixed(2)} DT</div>
+          </div>
         </div>
       `;
     }
   });
   
-  if (!hasAptSales) {
-    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0;">Aucune recette sur cette sélection.</div>`;
+  if (!hasData) {
+    html += `<div style="font-size:13px; color:var(--text3); text-align:center; margin:20px 0; padding:15px; background:var(--bg2); border-radius:8px;">Aucune activité financière sur cette sélection.</div>`;
   }
   
   html += `<hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">`;
