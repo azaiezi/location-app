@@ -1172,13 +1172,15 @@ function syncPaymentStatus() {
 
   const status = document.getElementById('f-status').value;
 
-  let total = parseFloat(document.getElementById('f-total').value) || 0;
+  // 🟢 CORRECTION : On se base d'abord sur le prix FINAL (avec remise)
+  let finalAmount = parseFloat(document.getElementById('f-final').value) || parseFloat(document.getElementById('f-total').value) || 0;
   let paid  = parseFloat(document.getElementById('f-paid').value) || 0;
 
-  if (status === 'paid') paid = total;
+  // Si payé, le montant encaissé est égal au montant final (après remise)
+  if (status === 'paid') paid = finalAmount;
   if (status === 'unpaid') paid = 0;
   if (status === 'cancelled') paid = 0;
-  if (paid > total) paid = total;
+  if (paid > finalAmount) paid = finalAmount;
 
   const id = editingResId || Date.now().toString();
 
@@ -1193,10 +1195,9 @@ function syncPaymentStatus() {
     to,
     persons: parseInt(document.getElementById('f-persons').value) || 1,
     status,
-    total: parseFloat(document.getElementById('f-final').value) || total,
-    paid,
+    total: finalAmount, // Enregistre la valeur nette après remise
+    paid: paid,         // Enregistre l'encaissé aligné
     notes: document.getElementById('f-notes').value.trim()
-    
   };
 
   if (editingResId) {
