@@ -2068,23 +2068,15 @@ function exportPDF() {
   const fileName = `Rapport_${selectedApt || 'Global'}_${new Date().toISOString().split('T')[0]}.pdf`;
 
   // Logique de téléchargement (PC) ou partage (Mobile)
+// 🟢 NOUVELLE LOGIQUE : VISUALISATION DIRECTE
+  // Crée un lien temporaire vers le PDF généré
   const pdfBlob = doc.output('blob');
-  const pdfFile = new File([pdfBlob], fileName, { type: "application/pdf" });
+  const pdfUrl = URL.createObjectURL(pdfBlob);
 
-  if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-    navigator.share({
-      files: [pdfFile],
-      title: 'Rapport PDF',
-      text: 'Voici le rapport des réservations.'
-    }).then(() => {
-      toast("✅ PDF ouvert/partagé avec succès !", "ok");
-    }).catch((error) => {
-      console.log('Partage annulé', error);
-    });
-  } else {
-    doc.save(fileName);
-    toast("✅ Rapport PDF téléchargé avec succès !", "ok");
-  }
+  // Ouvre le PDF directement dans un nouvel onglet / nouvelle fenêtre
+  window.open(pdfUrl, '_blank');
+  
+  toast("✅ Rapport PDF ouvert !", "ok");  
 }
 </script>
   <script>
