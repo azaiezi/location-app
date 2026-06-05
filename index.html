@@ -1991,6 +1991,91 @@ function renderPeriodStats() {
   html += `<hr style="border:none; border-top:1px solid var(--border); margin:15px 0;">`;
   out.innerHTML = html;
 }
+
+  // ══════════════════════════════════════════
+// EXPORT PDF DES RÉSERVATIONS
+// ══════════════════════════════════════════
+function exportPDF() {
+  // Initialisation de jsPDF
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Récupération des filtres actuels
+  const from = document.getElementById('stat-period-from').value;
+  const to = document.getElementById('stat-period-to').value;
+  const selectedApt = document.getElementById('stat-period-apt') ? document.getElementById('stat-period-apt').value : "";
+
+  // Définir le titre du document
+  let title = "Rapport des Réservations";
+  let filterActive = false;
+
+  // Filtrer les réservations (en excluant les annulations)
+  let dataToExport = reservations.filter(r => r.status !== 'cancelled' && r.status !== 'Annulé');
+
+  // Appliquer le filtre de dates si elles sont renseignées
+  if (from && to && from < to) {
+    dataToExport = dataToExport.filter(r => r.from && r.to && r.from < to && r.to > from);
+    title += ` (Du ${from} au ${to})`;
+    filterActive = true;
+  } else {
+    title += " (Global)";
+  }
+
+  // Appliquer le filtre d'appartement
+  if (selectedApt) {
+    dataToExport = dataToExport.filter(r => r.apt === selectedApt);
+    title += ` - ${selectedApt}`;
+  }
+
+  // Vérifier s'il y a des données à exporter
+  if (dataToExport.length === 0) {
+    toast("❌ Aucune donnée à exporter pour cette sélection", "err");
+    return;
+  }
+
+  // Traduire les statuts pour le PDF
+  const statusTrad = {
+    'paid': 'Payé',
+    'advance': 'Acompte',
+    'unpaid': 'Non payé'
+  };
+
+  // Préparer les lignes du tableau
+  const tableBody = dataToExport.map(r => {
+    const clientName = `${r.prenom || ''} ${r.nom || ''}`.trim();
+    const dates = `${r.from} au ${r.to}`;
+    const statut = statusTrad[r.status] || r.status;
+    
+    // Le montant final (après remise)
+    const amount = `${Number(r.total || 0).toFixed(2)} DT`;
+
+    return [r.apt, clientName, dates, statut, amount];
+  });
+
+  // Ajouter le titre sur le PDF
+  doc.setFontSize(14);
+  doc.text(title, 14, 15);
+
+  // Générer le tableau
+  doc.autoTable({
+    startY: 22,
+    head: [['Appartement', 'Client', 'Période', 'Statut', 'Montant']], // En-têtes des colonnes
+    body: tableBody, // Les données
+    theme: 'grid',
+    headStyles: { fillColor: [0, 113, 194] }, // Couleur bleue de votre thème
+    styles: { fontSize: 10, cellPadding: 3 },
+    columnStyles: {
+      0: { fontStyle: 'bold', textColor: [0, 113, 194] }, // Colonne Appartement
+      4: { halign: 'right', fontStyle: 'bold' } // Colonne Montant alignée à droite
+    }
+  });
+
+  // Sauvegarder et télécharger le fichier
+  const fileName = `Rapport_${selectedApt || 'Global'}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(fileName);
+  
+  toast("✅ Rapport PDF généré avec succès !", "ok");
+}
 </script>
   <script>
 if ('serviceWorker' in navigator) {
