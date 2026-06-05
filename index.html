@@ -1992,11 +1992,13 @@ function renderPeriodStats() {
   out.innerHTML = html;
 }
 // ══════════════════════════════════════════
-// EXPORT PDF DES RÉSERVATIONS (Optimisé Mobile/Android)
+// EXPORT PDF DES RÉSERVATIONS (Avec Tel, Remise, Avance)
 // ══════════════════════════════════════════
 function exportPDF() {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  
+  // 🟢 On passe le PDF en format 'landscape' (Paysage) pour faire tenir les 8 colonnes
+  const doc = new jsPDF('landscape'); 
 
   const from = document.getElementById('stat-period-from').value;
   const to = document.getElementById('stat-period-to').value;
@@ -2029,37 +2031,46 @@ function exportPDF() {
     'unpaid': 'Non payé'
   };
 
+  // 🟢 Ajout des nouvelles données pour chaque ligne
   const tableBody = dataToExport.map(r => {
     const clientName = `${r.prenom || ''} ${r.nom || ''}`.trim();
+    const tel = r.tel || '-'; // Téléphone (ou un tiret si vide)
     const dates = `${r.from} au ${r.to}`;
     const statut = statusTrad[r.status] || r.status;
-    const amount = `${Number(r.total || 0).toFixed(2)} DT`;
-    return [r.apt, clientName, dates, statut, amount];
+    
+    const remise = `${Number(r.discount || 0).toFixed(2)} DT`;
+    const avance = `${Number(r.paid || 0).toFixed(2)} DT`;
+    const amount = `${Number(r.total || 0).toFixed(2)} DT`; // Montant net
+    
+    // Ordre des colonnes : Appart, Client, Tel, Période, Statut, Remise, Avance, Total
+    return [r.apt, clientName, tel, dates, statut, remise, avance, amount];
   });
 
   doc.setFontSize(14);
   doc.text(title, 14, 15);
 
+  // 🟢 Configuration du tableau avec les nouvelles colonnes
   doc.autoTable({
     startY: 22,
-    head: [['Appartement', 'Client', 'Période', 'Statut', 'Montant']],
+    head: [['Appart', 'Client', 'Téléphone', 'Période', 'Statut', 'Remise', 'Avance/Payé', 'Total Net']],
     body: tableBody,
     theme: 'grid',
     headStyles: { fillColor: [0, 113, 194] },
-    styles: { fontSize: 10, cellPadding: 3 },
+    styles: { fontSize: 9, cellPadding: 3 }, // Police un peu plus petite pour que tout rentre
     columnStyles: {
       0: { fontStyle: 'bold', textColor: [0, 113, 194] },
-      4: { halign: 'right', fontStyle: 'bold' }
+      5: { halign: 'right' }, // Aligne la remise à droite
+      6: { halign: 'right', textColor: [16, 185, 129] }, // Aligne l'avance à droite (en vert)
+      7: { halign: 'right', fontStyle: 'bold' } // Aligne le total à droite (en gras)
     }
   });
 
   const fileName = `Rapport_${selectedApt || 'Global'}_${new Date().toISOString().split('T')[0]}.pdf`;
 
-  // 🟢 NOUVELLE LOGIQUE SPÉCIALE ANDROID / SMARTPHONES
+  // Logique de téléchargement (PC) ou partage (Mobile)
   const pdfBlob = doc.output('blob');
   const pdfFile = new File([pdfBlob], fileName, { type: "application/pdf" });
 
-  // Si le téléphone supporte le menu de partage natif (Android/iOS)
   if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
     navigator.share({
       files: [pdfFile],
@@ -2068,12 +2079,9 @@ function exportPDF() {
     }).then(() => {
       toast("✅ PDF ouvert/partagé avec succès !", "ok");
     }).catch((error) => {
-      // Si l'utilisateur annule le menu de partage, on ne fait rien de plus.
       console.log('Partage annulé', error);
     });
-  } 
-  // Si on est sur un ordinateur classique (PC/Mac)
-  else {
+  } else {
     doc.save(fileName);
     toast("✅ Rapport PDF téléchargé avec succès !", "ok");
   }
