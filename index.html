@@ -295,15 +295,17 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .dash6{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
 .card6{padding:16px;border-radius:16px;color:#fff;font-weight:700}
 .c1{background:#2563eb}.c2{background:#16a34a}.c3{background:#64748b}.c4{background:#7c3aed}.c5{background:#059669}.c6{background:#dc2626}
-
+/* Multi-sélection appartements (stats) */
+.stat-apt-opt{display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:8px;cursor:pointer;min-height:44px;user-select:none}
+.stat-apt-opt:hover{background:var(--bg3)}
+.stat-apt-opt:focus-within{outline:2px solid var(--primary);outline-offset:-2px}
+.stat-apt-opt input{width:18px;height:18px;flex-shrink:0;accent-color:var(--primary)}
 </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <!-- Librairies PDF rapatriées en local (same-origin) pour fonctionner hors-ligne.
+       Versions : jsPDF 2.5.1, jspdf-autotable 3.5.28. Voir vendor/ et CLAUDE.md. -->
+  <script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
 </head>
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2563eb">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <body>
 <div id="app">
 
@@ -333,11 +335,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
         <button onclick="navWeek(1)">›</button>
         <button onclick="goToday()" style="font-size:10px;padding:0 8px;width:auto">Auj.</button>
       </div>
-      <div class="cal-view-btns">
-        <button class="active">30j</button>
-      </div>
-    
-</div>
+    </div>
     <div style="padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
       <input type="date" class="form-control" id="srch-from">
       <input type="date" class="form-control" id="srch-to">
@@ -385,24 +383,16 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
       
       <div style="display:flex; gap:8px; margin-bottom:10px;">
         
-        <select class="form-control" id="stat-period-apt" style="flex:1;">
-          <option value="">Tous les appartements</option>
-          <option value="APT1">APT1</option>
-          <option value="APT2">APT2</option>
-          <option value="APT3">APT3</option>
-          <option value="APT4">APT4</option>
-          <option value="APT5">APT5</option>
-          <option value="APT6">APT6</option>
-          <option value="APT7">APT7</option>
-          <option value="APT8">APT8</option>
-          <option value="APTA">APTA</option>
-          <option value="APTB">APTB</option>
-          <option value="APTC">APTC</option>
-          <option value="APTD">APTD</option>
-          <option value="APTE">APTE</option>
-          <option value="APTF">APTF</option>
-          <option value="APTG">APTG</option>
-        </select>
+        <div id="stat-apt-ms" style="flex:1; position:relative;">
+          <button type="button" id="stat-apt-trigger" class="form-control"
+                  onclick="toggleAptMenu(event)" aria-haspopup="listbox" aria-expanded="false"
+                  style="text-align:left; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;">
+            <span id="stat-apt-summary" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Tous les appartements</span>
+            <span aria-hidden="true" style="opacity:.6; flex-shrink:0;">▾</span>
+          </button>
+          <div id="stat-apt-menu" role="listbox" aria-multiselectable="true" aria-label="Filtrer par appartement"
+               style="display:none; position:absolute; z-index:60; top:calc(100% + 4px); left:0; right:0; max-height:280px; overflow-y:auto; background:var(--bg2); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.25); padding:6px;"></div>
+        </div>
 
         <button class="btn-save" style="padding:10px 16px;" onclick="renderPeriodStats()">📊 Filtrer</button>
         <button class="btn-save" style="padding:10px 16px; background:var(--text2);" onclick="exportPDF()">📄 PDF</button>
@@ -621,7 +611,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 
         <div class="settings-section">
           <div class="settings-section-title">À propos</div>
-          <div style="font-size:13px;color:var(--text2);line-height:1.6">GestAppart v1.0 — Application offline PWA<br>Données stockées localement sur cet appareil.</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6">GestAppart v2.0 — Application offline PWA<br>Données stockées localement sur cet appareil.</div>
         </div>
       </div>
     </div>
@@ -676,8 +666,7 @@ const STATUS_CSS_CLASS = { paid:'status-paid', advance:'status-advance', unpaid:
 // ══════════════════════════════════════════
 let reservations = [];
 let aptConfig = {};  // { APT1: { price: 100, capacity: 4 }, ... }
-let calStartDate = new Date();
-let calDays = 30;
+let calYear = new Date().getFullYear();  // année civile rendue (vue calendrier annuelle)
 let currentTab = 'cal';
 let editingResId = null;
 let statusTargetId = null;
@@ -686,19 +675,50 @@ let confirmCallback = null;
 // ══════════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════════
+// Détecte un dépassement de quota localStorage (noms/codes variables selon navigateur).
+function isQuotaError(e) {
+  return !!e && (
+    e.name === 'QuotaExceededError' ||
+    e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    e.code === 22 || e.code === 1014
+  );
+}
+
+// Écrit les données. Renvoie true si succès, false sinon.
+// En cas d'échec (quota ou autre), ROLLBACK des deux clés pour éviter tout état
+// partiel : le localStorage reste cohérent avec la dernière sauvegarde réussie.
 function saveData() {
+  const prevRes = localStorage.getItem('gestappart_reservations');
+  const prevApt = localStorage.getItem('gestappart_apts');
   try {
     localStorage.setItem('gestappart_reservations', JSON.stringify(reservations));
     localStorage.setItem('gestappart_apts', JSON.stringify(aptConfig));
-  } catch(e) { toast('Erreur sauvegarde!', 'err'); }
+    return true;
+  } catch(e) {
+    // Restaurer l'état précédent (ces valeurs tenaient déjà en place → pas de quota au retour)
+    try {
+      if (prevRes !== null) localStorage.setItem('gestappart_reservations', prevRes);
+      else localStorage.removeItem('gestappart_reservations');
+      if (prevApt !== null) localStorage.setItem('gestappart_apts', prevApt);
+      else localStorage.removeItem('gestappart_apts');
+    } catch(_) {}
+    if (isQuotaError(e)) {
+      toast('⚠️ Stockage plein : enregistrement impossible. Supprimez d’anciennes sauvegardes (Paramètres) ou exportez puis nettoyez.', 'err');
+    } else {
+      toast('Erreur sauvegarde !', 'err');
+    }
+    return false;
+  }
 }
 
 function loadData() {
   try {
     const r = localStorage.getItem('gestappart_reservations');
     const a = localStorage.getItem('gestappart_apts');
-    if (r) reservations = JSON.parse(r);
-    if (a) aptConfig = JSON.parse(a);
+    // Normalisation défensive : répare d'éventuels champs manquants sans altérer
+    // les valeurs présentes (idempotent pour des données valides).
+    if (r) { const p = JSON.parse(r); reservations = Array.isArray(p) ? p.map(normalizeReservation) : []; }
+    if (a) { const p = JSON.parse(a); if (p && typeof p === 'object') aptConfig = p; }
   } catch(e) { reservations = []; aptConfig = {}; }
   // Ensure all apts have config
   APT_IDS.forEach(id => {
@@ -709,9 +729,13 @@ function loadData() {
 // ══════════════════════════════════════════
 // DATE HELPERS
 // ══════════════════════════════════════════
-const toISO = d => d.toISOString().slice(0,10);
+// Formatage LOCAL "AAAA-MM-JJ" (jamais toISOString(), qui convertit en UTC et
+// peut reculer d'un jour sur une Date à minuit local dans un fuseau à l'est de UTC).
+const toISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const parseDate = s => { const [y,m,d]=s.split('-'); return new Date(+y,+m-1,+d); };
-const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
+// Construction LOCALE composant par composant (minuit local, sans heure résiduelle) →
+// correct à travers les changements d'heure (DST) et aligné sur parseDate/toISO.
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
 const diffDays = (a,b) => Math.round((parseDate(b)-parseDate(a))/86400000);
 const fmtShort = s => { if(!s)return''; const[y,m,d]=s.split('-'); return `${d}/${m}`; };
 const fmtFull  = s => { if(!s)return''; const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; };
@@ -742,21 +766,30 @@ function hasConflict(aptId, from, to, excludeId) {
 // CALENDAR RENDER
 // ══════════════════════════════════════════
 const STATUS_SOLID = { paid:'#16a34a', advance:'#b45309', unpaid:'#dc2626', cancelled:'#4b5563' };
-const CELL_W = 48; // px per day cell
+const CELL_W = 64; // px per day cell (largeur lisible ; défilement horizontal dans .cal-wrap)
 const ROW_H  = 48; // px per apt row
+const APT_LABEL_W = 72; // largeur de la colonne des libellés d'appart (sticky left)
 
 function renderCalendar() {
+  // Préservation du scroll : aujourd'hui à la 1re ouverture, position conservée ensuite
+  // (un re-render après création/modif de résa ne doit pas ramener la vue à aujourd'hui).
+  const wrapEl0 = document.getElementById('cal-wrap');
+  const prevScroll = wrapEl0 ? wrapEl0.scrollLeft : 0;
+  const firstRender = !wrapEl0 || wrapEl0.dataset.calReady !== '1';
+
+  // Vue ANNÉE : on rend toute l'année civile calYear (365/366 colonnes),
+  // parcourue via le scroll horizontal de .cal-wrap.
+  const yearStart = new Date(calYear, 0, 1);
+  const dayCount  = Math.round((new Date(calYear + 1, 0, 1) - yearStart) / 86400000);
   const days = [];
-  for (let i = 0; i < calDays; i++) days.push(toISO(addDays(calStartDate, i)));
+  for (let i = 0; i < dayCount; i++) days.push(toISO(addDays(yearStart, i)));
 
   const start = days[0];
   const end   = days[days.length - 1];
-  document.getElementById('week-label').textContent =
-    `${fmtShort(start)} – ${fmtShort(end)} ${calStartDate.getFullYear()}`;
+  document.getElementById('week-label').textContent = `Année ${calYear}`;
 
   const today = toISO(new Date());
-  const APT_LABEL_W = 72;
-  const totalW = APT_LABEL_W + calDays * CELL_W;
+  const totalW = APT_LABEL_W + dayCount * CELL_W;
 
   // ── Build HTML ──
   // We use a plain div with absolute positioning instead of CSS grid rows
@@ -766,7 +799,7 @@ function renderCalendar() {
 
   // ── Sticky header row ──
   html += `<div style="display:flex;position:sticky;top:0;z-index:20;background:var(--bg2)">`;
-  html += `<div style="width:${APT_LABEL_W}px;flex-shrink:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;font-size:10px;color:var(--text3)">${MONTH_NAMES[calStartDate.getMonth()]}</div>`;
+  html += `<div style="width:${APT_LABEL_W}px;flex-shrink:0;position:sticky;top:0;left:0;z-index:25;background:var(--bg2);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;font-size:10px;color:var(--text3)">${calYear}</div>`;
   days.forEach(d => {
     const dt = parseDate(d);
     const isTd = d === today;
@@ -814,7 +847,6 @@ function renderCalendar() {
   grid.appendChild(overlay);
 
   const HEADER_H = 44; // header row height
-  const APT_LABEL_W2 = 72;
 
   APT_IDS.forEach((aptId, rowIdx) => {
     const aptResas = reservations.filter(r =>
@@ -834,7 +866,7 @@ function renderCalendar() {
       const spanDays = Math.min(diffDays(visFrom, resa.to), days.length - colStart);
       if (spanDays <= 0) return;
 
-      const left = APT_LABEL_W2 + colStart * CELL_W + 2;
+      const left = APT_LABEL_W + colStart * CELL_W + 2;
       const width = spanDays * CELL_W - 4;
       const top   = HEADER_H + rowIdx * ROW_H + 5;
       const height = ROW_H - 10;
@@ -882,13 +914,24 @@ function renderCalendar() {
     });
   });
 
-  // Scroll to today
-  const todayIdx = days.indexOf(today);
-  if (todayIdx >= 0) {
-    const wrap = document.getElementById('cal-wrap');
-    const scrollTo = APT_LABEL_W2 + todayIdx * CELL_W - 80;
-    wrap.scrollLeft = Math.max(0, scrollTo);
+  // 1re ouverture → aujourd'hui ; re-renders suivants → position de scroll préservée.
+  const wrapEl = document.getElementById('cal-wrap');
+  if (firstRender) {
+    scrollToToday(false);
+    if (wrapEl) wrapEl.dataset.calReady = '1';
+  } else if (wrapEl) {
+    wrapEl.scrollLeft = prevScroll;
   }
+}
+
+// Positionne le scroll horizontal sur aujourd'hui (aujourd'hui près du bord gauche).
+function scrollToToday(smooth) {
+  const wrap = document.getElementById('cal-wrap');
+  if (!wrap) return;
+  const idx = diffDays(toISO(new Date(calYear, 0, 1)), toISO(new Date()));
+  if (idx < 0) return;                       // aujourd'hui hors de l'année rendue
+  const left = Math.max(0, APT_LABEL_W + idx * CELL_W - 80);
+  wrap.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
 }
 
 
@@ -897,21 +940,14 @@ function handleCellClick(aptId, date) {
   openForm(null, aptId, date);
 }
 
+// Boutons = raccourcis de SCROLL (la grille contient déjà toute l'année, pas de re-render).
 function navWeek(dir) {
-  calStartDate = addDays(calStartDate, dir * calDays);
-  renderCalendar();
+  const wrap = document.getElementById('cal-wrap');
+  if (wrap) wrap.scrollBy({ left: dir * 30 * CELL_W, behavior: 'smooth' }); // ≈ un mois
 }
 
 function goToday() {
-  calStartDate = mondayOf(new Date());
-  renderCalendar();
-}
-
-function setDays(n) {
-  calDays = n;
-  document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('btn-'+n).classList.add('active');
-  renderCalendar();
+  scrollToToday(true);
 }
 
 // ══════════════════════════════════════════
@@ -1028,6 +1064,7 @@ function renderStats() {
 // ══════════════════════════════════════════
 function openForm(id, preApt, preDate) {
   editingResId = id || null;
+  clearReservationErrors();
 
   document.getElementById('form-title').textContent =
     id ? 'Modifier réservation' : 'Nouvelle réservation';
@@ -1091,6 +1128,7 @@ function openForm(id, preApt, preDate) {
 function openEdit(id) { openForm(id); }
 
 function closeForm() {
+  clearReservationErrors();
   document.getElementById('modal-form').classList.remove('show');
   editingResId = null;
 }
@@ -1169,6 +1207,40 @@ function syncPaymentStatus() {
   }
 }
 
+// Champs numériques du formulaire soumis à la validation de bornes.
+const RESA_NUM_FIELDS = ['f-persons', 'f-discount', 'f-paid', 'f-total'];
+
+// Affiche/efface un message d'erreur AU NIVEAU DU CHAMP (pas un toast générique).
+function setFieldError(id, msg) {
+  const input = document.getElementById(id);
+  if (input) input.style.borderColor = 'var(--red)';
+  let err = document.getElementById(id + '-err');
+  if (!err && input) {
+    err = document.createElement('div');
+    err.id = id + '-err';
+    err.style.cssText = 'color:var(--red);font-size:11px;margin-top:3px';
+    input.parentNode.appendChild(err);
+  }
+  if (err) err.textContent = msg;
+}
+function clearReservationErrors() {
+  RESA_NUM_FIELDS.forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.style.borderColor = '';
+    const err = document.getElementById(id + '-err');
+    if (err) err.remove();
+  });
+}
+// Lecture robuste d'un champ numérique : gère vide / espaces / virgule décimale.
+// → { empty:true } si vide, sinon { value, ok:false } si non numérique.
+function readNumField(id) {
+  const el = document.getElementById(id);
+  const raw = ((el && el.value) || '').toString().trim().replace(',', '.');
+  if (raw === '') return { empty: true, value: 0, ok: true };
+  const v = parseFloat(raw);
+  return { empty: false, value: v, ok: Number.isFinite(v) };
+}
+
   function saveReservation() {
   const prenom = document.getElementById('f-prenom').value.trim();
   const nom    = document.getElementById('f-nom').value.trim();
@@ -1195,46 +1267,84 @@ function syncPaymentStatus() {
 
   const status = document.getElementById('f-status').value;
 
-  // 🟢 CORRECTION : On se base d'abord sur le prix FINAL (avec remise)
-  let finalAmount = parseFloat(document.getElementById('f-final').value) || parseFloat(document.getElementById('f-total').value) || 0;
-  let paid  = parseFloat(document.getElementById('f-paid').value) || 0;
+  // ── Validation DURE (bloque uniquement l'indiscutablement faux : négatifs / non numérique) ──
+  clearReservationErrors();
+  let hasError = false;
+  const persons  = readNumField('f-persons');
+  const discount = readNumField('f-discount');
+  const paidF    = readNumField('f-paid');
+  const totalF   = readNumField('f-total');
 
-  // Si payé, le montant encaissé est égal au montant final (après remise)
+  if (persons.empty || !persons.ok || !Number.isInteger(persons.value) || persons.value < 1) {
+    setFieldError('f-persons', 'Au moins 1 personne (entier).'); hasError = true;
+  }
+  if (!discount.empty && (!discount.ok || discount.value < 0)) {
+    setFieldError('f-discount', 'Remise : nombre ≥ 0.'); hasError = true;
+  }
+  if (!paidF.empty && (!paidF.ok || paidF.value < 0)) {
+    setFieldError('f-paid', 'Montant payé : nombre ≥ 0.'); hasError = true;
+  }
+  if (!totalF.empty && (!totalF.ok || totalF.value < 0)) {
+    setFieldError('f-total', 'Montant : nombre ≥ 0.'); hasError = true;
+  }
+  if (hasError) { toast('Corrigez les champs en rouge.', 'err'); return; }
+
+  // ── Montant final et encaissé (logique existante conservée) ──
+  let finalAmount = parseFloat(document.getElementById('f-final').value) || parseFloat(document.getElementById('f-total').value) || 0;
+  let paid = paidF.value;
   if (status === 'paid') paid = finalAmount;
   if (status === 'unpaid') paid = 0;
   if (status === 'cancelled') paid = 0;
-  if (paid > finalAmount) paid = finalAmount;
+  // Plus de clamp silencieux paid≤final : un trop-perçu / avance est légitime.
+  // → au plus un avertissement souple ci-dessous (statut 'advance').
 
-  const id = editingResId || Date.now().toString();
-
-  const r = {
-    discount: parseFloat(document.getElementById('f-discount').value) || 0,
-    id,
-    prenom,
-    nom,
-    tel: document.getElementById('f-tel').value.trim(),
-    apt,
-    from,
-    to,
-    persons: parseInt(document.getElementById('f-persons').value) || 1,
-    status,
-    total: finalAmount, // Enregistre la valeur nette après remise
-    paid: paid,         // Enregistre l'encaissé aligné
-    notes: document.getElementById('f-notes').value.trim()
-  };
-
-  if (editingResId) {
-    const idx = reservations.findIndex(x => x.id === editingResId);
-    if (idx >= 0) reservations[idx] = r;
-  } else {
-    reservations.push(r);
+  // ── Avertissements SOUPLES (confirmables, n'empêchent pas d'enregistrer) ──
+  const warnings = [];
+  const capRaw = (aptConfig[apt] || {}).capacity;
+  const cap = (capRaw !== '' && capRaw != null && Number.isFinite(+capRaw)) ? +capRaw : null;
+  if (cap !== null && persons.value > cap) {
+    warnings.push(`Nombre de personnes (${persons.value}) supérieur à la capacité de ${apt} (${cap}).`);
+  }
+  if (status === 'advance' && paid > finalAmount) {
+    warnings.push(`Montant payé (${paid} DT) supérieur au total final (${finalAmount} DT).`);
   }
 
-  saveData();
-  closeForm();
-  refreshAll();
+  const commit = () => {
+    const id = editingResId || Date.now().toString();
+    const r = {
+      discount: discount.empty ? 0 : discount.value,
+      id,
+      prenom,
+      nom,
+      tel: document.getElementById('f-tel').value.trim(),
+      apt,
+      from,
+      to,
+      persons: persons.value,
+      status,
+      total: finalAmount, // Enregistre la valeur nette après remise
+      paid: paid,         // Enregistre l'encaissé
+      notes: document.getElementById('f-notes').value.trim()
+    };
 
-  toast(editingResId ? "Réservation modifiée ✓" : "Réservation ajoutée ✓", "ok");
+    if (editingResId) {
+      const idx = reservations.findIndex(x => x.id === editingResId);
+      if (idx >= 0) reservations[idx] = r;
+    } else {
+      reservations.push(r);
+    }
+
+    saveData();
+    closeForm();
+    refreshAll();
+    toast(editingResId ? "Réservation modifiée ✓" : "Réservation ajoutée ✓", "ok");
+  };
+
+  if (warnings.length) {
+    openConfirm('Valeurs inhabituelles', warnings.join(' ') + ' Enregistrer quand même ?', commit);
+  } else {
+    commit();
+  }
 }
 // ══════════════════════════════════════════
 // STATUS CHANGE
@@ -1372,35 +1482,173 @@ function renderSearchResults() {
 }
 
 // ══════════════════════════════════════════
+// SCHÉMA DE DONNÉES & MIGRATION  (bloc pur, testable hors DOM)
+// ══════════════════════════════════════════
+//<<DATA_CORE_START>>
+// Version courante du format de données exporté. Incrémenter à CHAQUE évolution
+// du schéma, puis ajouter la migration correspondante dans MIGRATIONS.
+const SCHEMA_VERSION = 2;
+const VALID_STATUS = ['paid', 'advance', 'unpaid', 'cancelled'];
+
+// Détecte la version d'un objet importé.
+// Legacy (aucun schemaVersion) : exports sans version OU backups {version:"1.0"} → 0.
+function detectSchemaVersion(data) {
+  return (data && typeof data.schemaVersion === 'number') ? data.schemaVersion : 0;
+}
+
+// Pipeline de migrations : chaque entrée transforme la version N vers la suivante.
+// Extensible : pour une future v3, ajouter `2: (data) => ({ ...data, schemaVersion: 3 })`.
+const MIGRATIONS = {
+  // 0 → 2 : formats hérités (export sans version, backup {version:"1.0"}) vers
+  //          l'enveloppe courante. NE TOUCHE PAS aux valeurs des réservations.
+  0: (data) => ({
+    schemaVersion: 2,
+    reservations : Array.isArray(data.reservations) ? data.reservations : [],
+    aptConfig    : (data.aptConfig && typeof data.aptConfig === 'object') ? data.aptConfig : {},
+    exportDate   : data.exportDate || data.date || null,
+  }),
+};
+
+// Applique les migrations manquantes jusqu'à la version courante. Idempotent :
+// une donnée déjà à jour ressort inchangée.
+function migrate(data) {
+  let out = data;
+  let v = detectSchemaVersion(out);
+  let guard = 0;
+  while (v < SCHEMA_VERSION && MIGRATIONS[v] && guard++ < 50) {
+    out = MIGRATIONS[v](out);
+    v = detectSchemaVersion(out);
+  }
+  return out;
+}
+
+// Normalise UNE réservation : complète les champs manquants avec des défauts
+// documentés, SANS jamais altérer une valeur présente et correctement typée.
+// (Ex. paid > total est CONSERVÉ tel quel — donnée métier réelle en prod ;
+//  le contrôle métier reste dans le formulaire, pas à l'import.)
+function normalizeReservation(r) {
+  const src = (r && typeof r === 'object') ? r : {};
+  const num = (v, def) => (v !== '' && v !== null && Number.isFinite(+v)) ? +v : def;
+  const int = (v, def) => Number.isFinite(parseInt(v, 10)) ? parseInt(v, 10) : def;
+  return {
+    id      : src.id != null ? String(src.id) : (Date.now().toString() + Math.floor(Math.random() * 1e6)),
+    prenom  : typeof src.prenom === 'string' ? src.prenom : '',
+    nom     : typeof src.nom    === 'string' ? src.nom    : '',
+    tel     : typeof src.tel    === 'string' ? src.tel    : '',
+    apt     : typeof src.apt    === 'string' ? src.apt    : '',
+    from    : typeof src.from   === 'string' ? src.from   : '',
+    to      : typeof src.to     === 'string' ? src.to     : '',
+    persons : int(src.persons, 1),
+    status  : VALID_STATUS.includes(src.status) ? src.status : 'unpaid',
+    total   : num(src.total, 0),
+    paid    : num(src.paid, 0),
+    discount: num(src.discount, 0),
+    notes   : typeof src.notes  === 'string' ? src.notes  : '',
+  };
+}
+
+// Valide la structure d'un fichier importé. Rejet UNIQUEMENT si fondamentalement
+// incompatible. Retourne { ok:true } ou { ok:false, error:'…' }.
+function validateImportStructure(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data))
+    return { ok: false, error: 'Format non reconnu (ce n’est pas un fichier GestAppart).' };
+  if (!Array.isArray(data.reservations))
+    return { ok: false, error: 'Ce fichier ne contient aucune réservation exploitable.' };
+  return { ok: true };
+}
+
+// Prépare des données importées : migration legacy → courant + normalisation
+// tolérante. NE modifie PAS l'état de l'app ; renvoie un objet prêt à poser.
+function prepareImport(data) {
+  const migrated = migrate(data);
+  return {
+    reservations: migrated.reservations.map(normalizeReservation),
+    aptConfig   : (migrated.aptConfig && typeof migrated.aptConfig === 'object') ? migrated.aptConfig : {},
+  };
+}
+//<<DATA_CORE_END>>
+
+// ══════════════════════════════════════════
 // EXPORT / IMPORT
 // ══════════════════════════════════════════
 function exportJSON() {
-  const data = { reservations, aptConfig, exportDate: new Date().toISOString() };
+  const data = { schemaVersion: SCHEMA_VERSION, reservations, aptConfig, exportDate: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `gestappart_${toISO(new Date())}.json`;
   a.click();
-  toast('Export téléchargé ✓','ok');
+  toast('Export téléchargé ✓','ok', 1800);
 }
 function triggerImport() { document.getElementById('import-file').click(); }
 function importJSON(e) {
-  const file = e.target.files[0]; if(!file)return;
+  const file = e.target.files[0];
+  e.target.value = '';                 // permet de ré-importer le même fichier
+  if (!file) return;
+
   const reader = new FileReader();
+  reader.onerror = () => toast('❌ Impossible de lire le fichier', 'err');
   reader.onload = ev => {
+    // 1) Parse — un JSON corrompu ne touche à rien
+    let data;
     try {
-      const data = JSON.parse(ev.target.result);
-      if (data.reservations) {
-        openConfirm('Importer des données', `Importer ${data.reservations.length} réservations ? Les données actuelles seront remplacées.`, ()=>{
-          reservations = data.reservations;
-          if (data.aptConfig) aptConfig = data.aptConfig;
-          saveData(); refreshAll(); closeSettings(); toast('Import réussi ✓','ok');
-        });
-      } else { toast('Fichier invalide','err'); }
-    } catch { toast('Erreur lecture fichier','err'); }
+      data = JSON.parse(ev.target.result);
+    } catch {
+      toast('❌ Fichier illisible : JSON invalide ou corrompu', 'err');
+      return;
+    }
+
+    // 2) Validation de structure — rejet propre si fondamentalement incompatible
+    const check = validateImportStructure(data);
+    if (!check.ok) { toast('❌ ' + check.error, 'err'); return; }
+
+    // 3) Migration legacy → courant + normalisation, dans une structure TEMPORAIRE
+    let clean;
+    try {
+      clean = prepareImport(data);
+    } catch (err) {
+      toast('❌ Import impossible : ' + (err.message || 'données invalides'), 'err');
+      return;
+    }
+
+    // 4) Confirmation, puis remplacement NON destructif
+    const n = clean.reservations.length;
+    openConfirm(
+      'Importer des données',
+      `Importer ${n} réservation(s) ? Une sauvegarde de vos données actuelles sera créée automatiquement avant remplacement (réversible via « Restaurer une sauvegarde »).`,
+      () => {
+        // a) Backup auto de l'état COURANT (avant tout écrasement)
+        const backedUp = storeBackupSnapshot(createBackupSnapshot());
+        if (backedUp) { commitImport(clean, n, false); return; }
+        // b) Backup pré-import IMPOSSIBLE (quota) → ne pas importer en silence :
+        //    prévenir et laisser le choix (nettoyer d'abord, ou import sans retour).
+        openConfirm(
+          '⚠️ Sauvegarde de sécurité impossible',
+          "Stockage plein : vos données actuelles n'ont pas pu être sauvegardées avant l'import. "
+          + "Si vous continuez, l'import ne sera PAS réversible. Vous pouvez d'abord supprimer "
+          + "d'anciennes sauvegardes (Paramètres), ou confirmer un import sans point de retour.",
+          () => commitImport(clean, n, true)
+        );
+      }
+    );
   };
   reader.readAsText(file);
-  e.target.value='';
+}
+
+// Applique un import validé. noBackup=true signale l'absence de backup pré-import.
+function commitImport(clean, n, noBackup) {
+  reservations = clean.reservations;
+  aptConfig    = clean.aptConfig;
+  const saved = saveData();          // false si quota (rollback déjà effectué dedans)
+  refreshAll();
+  renderLastBackupInfo();
+  renderBackupList();
+  closeSettings();
+  if (!saved) {
+    toast('⚠️ Import affiché mais NON enregistré (stockage plein). Exportez ou nettoyez, puis réimportez.', 'err');
+  } else {
+    toast(`✅ Import réussi : ${n} réservation(s).` + (noBackup ? ' (sans point de retour)' : ' Sauvegarde de sécurité créée.'), 'ok', 2800);
+  }
 }
 function confirmClearAll() {
   openConfirm('Effacer toutes les données','Toutes les réservations seront supprimées définitivement. Continuer ?',()=>{
@@ -1475,27 +1723,42 @@ function createBackupSnapshot() {
     date         : new Date().toISOString(),
     reservations : JSON.parse(JSON.stringify(reservations)),
     aptConfig    : JSON.parse(JSON.stringify(aptConfig)),
-    version      : '1.0',
+    version      : '1.0',            // conservé pour compat affichage historique
+    schemaVersion: SCHEMA_VERSION,   // version de schéma courante
   };
 }
 
 // ── Sauvegarder un snapshot dans localStorage ──
+// Renvoie true si le snapshot (le plus récent) a bien été écrit, false sinon.
+// Rétention : garde les N derniers (réglage `keep`, min 1). Le plus récent est en
+// tête → jamais purgé en premier. Résilience quota : si l'écriture dépasse le quota,
+// on retire les sauvegardes les plus anciennes et on réessaie, jusqu'à ne garder
+// que la plus récente ; si même elle ne tient pas, on renvoie false (sans casse).
 function storeBackupSnapshot(snapshot) {
   const s = loadBackupSettings();
+  const keep = Math.max(1, parseInt(s.keep, 10) || 1);
+
   let backups = [];
   try {
     const raw = localStorage.getItem(BACKUP_STORE_KEY);
     if (raw) backups = JSON.parse(raw);
   } catch {}
+  if (!Array.isArray(backups)) backups = [];
 
-  // Ajouter en tête
-  backups.unshift(snapshot);
+  backups.unshift(snapshot);          // le plus récent en tête
+  backups = backups.slice(0, keep);   // rétention : N derniers
 
-  // Garder uniquement les N dernières
-  backups = backups.slice(0, s.keep);
-
-  localStorage.setItem(BACKUP_STORE_KEY, JSON.stringify(backups));
-  localStorage.setItem(BACKUP_LAST_KEY, snapshot.date);
+  while (backups.length > 0) {
+    try {
+      localStorage.setItem(BACKUP_STORE_KEY, JSON.stringify(backups));
+      localStorage.setItem(BACKUP_LAST_KEY, snapshot.date);
+      return true;
+    } catch(e) {
+      if (!isQuotaError(e) || backups.length === 1) return false; // impossible même seul
+      backups.pop();                  // retirer le plus ancien et réessayer
+    }
+  }
+  return false;
 }
 
 // ── Déclencher une sauvegarde (avec téléchargement fichier) ──
@@ -1524,7 +1787,7 @@ function performAutoBackup(isManual) {
   renderLastBackupInfo();
   renderBackupList();
 
-  toast(isManual ? '💾 Sauvegarde téléchargée ✓' : '💾 Sauvegarde automatique effectuée ✓', 'ok');
+  toast(isManual ? '💾 Sauvegarde téléchargée ✓' : '💾 Sauvegarde automatique effectuée ✓', 'ok', 1800);
 }
 
 // ── Lancer manuellement depuis les paramètres ──
@@ -1584,7 +1847,7 @@ function downloadStoredBackup(index) {
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
-  toast('📥 Fichier téléchargé', 'ok');
+  toast('📥 Fichier téléchargé', 'ok', 1800);
 }
 
 // ── Afficher la modale de restauration ──
@@ -1730,13 +1993,16 @@ function refreshAll() {
 // ══════════════════════════════════════════
 // TOAST
 // ══════════════════════════════════════════
-function toast(msg, type) {
+// Durée d'affichage (ms). Par défaut 2500 → succès standards ET erreurs/avertissements
+// restent lisibles. Certains toasts anodins (sauvegarde/export/PDF) passent une durée
+// plus courte en 3e argument ; les erreurs ne fournissent jamais de durée (→ 2500).
+function toast(msg, type, duration) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'toast' + (type?' '+type:'');
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(()=>el.classList.remove('show'),2500);
+  el._t = setTimeout(()=>el.classList.remove('show'), (typeof duration === 'number' ? duration : 2500));
 }
 
 
@@ -1782,8 +2048,8 @@ function init() {
     filterApt.add(new Option(id, id));
   });
 
-  // Set calendar start to current Monday
-  calStartDate = mondayOf(new Date());
+  // Vue calendrier = année civile en cours (ouverture positionnée sur aujourd'hui).
+  calYear = new Date().getFullYear();
   renderCalendar();
   renderList();
 
@@ -1876,30 +2142,126 @@ function searchAvailability(){
 // ══════════════════════════════════════════
 // STATISTIQUES : CORRECTION REMISE (CA & ENCAISSÉ)
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// MULTI-SÉLECTION D'APPARTEMENTS (filtre Statistiques)
+// État central : ensemble des apparts EXPLICITEMENT cochés. Sémantique « vide = tous ».
+// ══════════════════════════════════════════
+let statSelectedApts = new Set();
+
+// Liste effective d'apparts à considérer (vide = tous → APT_IDS).
+function statAptsEffective() {
+  if (statSelectedApts.size === 0) return APT_IDS.slice();
+  return APT_IDS.filter(id => statSelectedApts.has(id));
+}
+// Vrai si la sélection équivaut à « tous » (vide, ou tous cochés).
+function statIsAll() {
+  return statSelectedApts.size === 0 || statSelectedApts.size === APT_IDS.length;
+}
+// Libellé de résumé pour le déclencheur et les cartes.
+function statAptsLabel() {
+  if (statIsAll()) return 'Tous les appartements';
+  const sel = statAptsEffective();
+  return sel.length <= 3 ? sel.join(', ') : `${sel.length} appartements`;
+}
+
+// Construit le menu (une seule fois) depuis la MÊME source que l'ancien select (APT_IDS).
+function buildAptMenu() {
+  const menu = document.getElementById('stat-apt-menu');
+  if (!menu || menu.dataset.built === '1') return;
+  let html = `
+    <label class="stat-apt-opt" role="option" aria-checked="false">
+      <input type="checkbox" id="stat-apt-all" onchange="onAptAll(this)" aria-label="Tous les appartements">
+      <span style="font-weight:600;">Tous les appartements</span>
+    </label>
+    <div style="height:1px; background:var(--border); margin:4px 2px;"></div>`;
+  APT_IDS.forEach(id => {
+    html += `
+    <label class="stat-apt-opt" role="option" aria-checked="false">
+      <input type="checkbox" value="${id}" onchange="onAptCheck(this)" aria-label="${id}">
+      <span>${id}</span>
+    </label>`;
+  });
+  menu.innerHTML = html;
+  menu.dataset.built = '1';
+}
+
+// Reflète l'état interne dans les cases + libellé + attributs ARIA.
+function syncAptMenuFromState() {
+  const menu = document.getElementById('stat-apt-menu');
+  if (!menu) return;
+  menu.querySelectorAll('input[type="checkbox"][value]').forEach(cb => {
+    cb.checked = statSelectedApts.has(cb.value);
+    cb.closest('.stat-apt-opt').setAttribute('aria-checked', String(cb.checked));
+  });
+  const allCb = document.getElementById('stat-apt-all');
+  if (allCb) {
+    const n = statSelectedApts.size;
+    allCb.checked = (n === APT_IDS.length);
+    allCb.indeterminate = (n > 0 && n < APT_IDS.length);
+    allCb.closest('.stat-apt-opt').setAttribute('aria-checked', String(allCb.checked));
+  }
+  const sum = document.getElementById('stat-apt-summary');
+  if (sum) sum.textContent = statAptsLabel();
+}
+
+function onAptCheck(cb) {
+  if (cb.checked) statSelectedApts.add(cb.value);
+  else statSelectedApts.delete(cb.value);
+  syncAptMenuFromState();
+}
+function onAptAll(cb) {
+  if (cb.checked) statSelectedApts = new Set(APT_IDS);
+  else statSelectedApts.clear();
+  syncAptMenuFromState();
+}
+
+function openAptMenu() {
+  buildAptMenu();
+  syncAptMenuFromState();
+  document.getElementById('stat-apt-menu').style.display = 'block';
+  document.getElementById('stat-apt-trigger').setAttribute('aria-expanded', 'true');
+  document.addEventListener('click', handleAptOutside, true);
+  document.addEventListener('keydown', handleAptKeydown, true);
+}
+function closeAptMenu() {
+  const menu = document.getElementById('stat-apt-menu');
+  if (!menu) return;
+  menu.style.display = 'none';
+  document.getElementById('stat-apt-trigger').setAttribute('aria-expanded', 'false');
+  document.removeEventListener('click', handleAptOutside, true);
+  document.removeEventListener('keydown', handleAptKeydown, true);
+  // Recalcule immédiatement si des dates valides sont déjà saisies (feedback direct).
+  const from = document.getElementById('stat-period-from').value;
+  const to   = document.getElementById('stat-period-to').value;
+  if (from && to && from < to) renderPeriodStats();
+}
+function toggleAptMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('stat-apt-menu');
+  if (menu && menu.style.display === 'block') closeAptMenu();
+  else openAptMenu();
+}
+function handleAptOutside(e) {
+  const wrap = document.getElementById('stat-apt-ms');
+  if (wrap && !wrap.contains(e.target)) closeAptMenu();
+}
+function handleAptKeydown(e) {
+  if (e.key === 'Escape') { closeAptMenu(); document.getElementById('stat-apt-trigger').focus(); }
+}
+
 function renderPeriodStats() {
   const from = document.getElementById('stat-period-from').value;
   const to = document.getElementById('stat-period-to').value;
-  const selectApt = document.getElementById('stat-period-apt');
   const out = document.getElementById('period-stats-results');
-  
+
   if (!from || !to || from >= to) {
     out.innerHTML = '<div class="form-info" style="color:var(--red);background:rgba(239,68,68,.12);border-color:var(--red);padding:10px;border-radius:8px;">Veuillez choisir des dates valides.</div>';
     return;
   }
 
-  if (selectApt && selectApt.options.length <= 1) {
-    const currentVal = selectApt.value;
-    selectApt.innerHTML = '<option value="">Tous les appartements</option>';
-    APT_IDS.forEach(id => {
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = id;
-      selectApt.appendChild(opt);
-    });
-    selectApt.value = currentVal;
-  }
-
-  const selectedApt = selectApt ? selectApt.value : "";
+  // Filtre multi-appartements (vide = tous).
+  const allApts = statIsAll();
+  const effSet  = new Set(statAptsEffective());
 
   let totalCA = 0;
   let totalEncaisse = 0;
@@ -1914,8 +2276,8 @@ function renderPeriodStats() {
   
   reservations.forEach(r => {
     if (r.status === 'cancelled' || r.status === 'Annulé') return;
-    if (selectedApt && r.apt !== selectedApt) return;
-    
+    if (!allApts && !effSet.has(r.apt)) return;
+
     // Filtrage sur la période sélectionnée
     if (r.from && r.to && r.from < to && r.to > from) {
       
@@ -1944,7 +2306,7 @@ function renderPeriodStats() {
     }
   });
   
-  const labelApt = selectedApt ? `Appartement ${selectedApt}` : "Tous les appartements";
+  const labelApt = statAptsLabel();
   
   let html = `
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px;">
@@ -1964,7 +2326,7 @@ function renderPeriodStats() {
   `;
   
   let hasData = false;
-  const aptsToRender = selectedApt ? [selectedApt] : APT_IDS;
+  const aptsToRender = allApts ? APT_IDS : statAptsEffective();
   
   aptsToRender.forEach(apt => {
     if (aptStatsFinal[apt] > 0 || aptStatsPaid[apt] > 0) {
@@ -2002,8 +2364,9 @@ function exportPDF() {
 
   const from = document.getElementById('stat-period-from').value;
   const to = document.getElementById('stat-period-to').value;
-  const aptNode = document.getElementById('stat-period-apt');
-  const selectedApt = aptNode ? aptNode.value : "";
+
+  const allApts = statIsAll();
+  const effSet  = new Set(statAptsEffective());
 
   let title = "Rapport des Réservations";
   let dataToExport = reservations.filter(r => r.status !== 'cancelled' && r.status !== 'Annulé');
@@ -2015,9 +2378,9 @@ function exportPDF() {
     title += " (Global)";
   }
 
-  if (selectedApt) {
-    dataToExport = dataToExport.filter(r => r.apt === selectedApt);
-    title += ` - ${selectedApt}`;
+  if (!allApts) {
+    dataToExport = dataToExport.filter(r => effSet.has(r.apt));
+    title += ` - ${statAptsLabel()}`;
   }
 
   if (dataToExport.length === 0) {
@@ -2065,7 +2428,8 @@ function exportPDF() {
     }
   });
 
-  const fileName = `Rapport_${selectedApt || 'Global'}_${new Date().toISOString().split('T')[0]}.pdf`;
+  const aptTag = allApts ? 'Global' : (statAptsEffective().length <= 3 ? statAptsEffective().join('-') : `${statAptsEffective().length}apts`);
+  const fileName = `Rapport_${aptTag}_${toISO(new Date())}.pdf`;
 
   // Logique de téléchargement (PC) ou partage (Mobile)
 // 🟢 NOUVELLE LOGIQUE : VISUALISATION DIRECTE
@@ -2076,12 +2440,7 @@ function exportPDF() {
   // Ouvre le PDF directement dans un nouvel onglet / nouvelle fenêtre
   window.open(pdfUrl, '_blank');
   
-  toast("✅ Rapport PDF ouvert !", "ok");  
-}
-</script>
-  <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js');
+  toast("✅ Rapport PDF ouvert !", "ok", 1800);  
 }
 </script>
 </body>

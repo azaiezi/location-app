@@ -1,0 +1,39 @@
+{
+  "reservations": [
+    {
+      "discount": 0,
+      "id": "1779092255119",
+      "prenom": "Brahim",
+      "nom": "Magtouf",
+      "tel": "98558080",
+      "apt": "APT5",
+      "from": "2026-07-20",
+      "to": "2026-07-30",
+      "persons": 6,
+      "status": "unpaid",
+      "total": 700,
+      "paid": 0,
+      "notes": ""
+    },
+    {
+      "discount": 90,
+      "id": "1780472749324",
+      "prenom": "Abdelhakim",
+      "nom": "Ouassa",
+      "tel": "+213671128033",
+      "apt": "APTB",
+      "from": "2026-06-03",
+      "to": "2026-06-07",
+      "persons": 2,
+      "status": "paid",
+      "total": 190,
+      "paid": 190,
+      "notes": "Alger"
+    }
+  ],
+  "aptConfig": {
+    "APT5": { "price": 70, "capacity": "" },
+    "APTB": { "price": 70, "capacity": "" }
+  },
+  "exportDate": "2026-07-01T10:00:00.000Z"
+}
