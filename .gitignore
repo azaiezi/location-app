@@ -1,0 +1,12 @@
+# Données réelles (PII locataires) — ne JAMAIS committer sur le dépôt public.
+# Le vrai backup de prod est conservé en local sous ce nom ; la fixture committée
+# `test/fixtures/prod-sample.json` est une version ANONYMISÉE.
+*.local.json
+test/fixtures/prod-sample.local.json
+
+# Sauvegardes/exports réels éventuellement déposés dans le repo par erreur
+gestappart_backup_*.json
+gestappart_20*.json
+
+# Divers OS / éditeurs
+.DS_Store
